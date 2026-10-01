@@ -22,6 +22,9 @@ function setupUI() {
     btnBackHome.onclick = function() {
       window.colorAudio.playUiClick();
       window.inGame = false;
+      if (window.gameMode !== 'party' && window.clearOpponents) {
+        window.clearOpponents();
+      }
       homeScreen.style.display = 'flex';
       gameHeader.style.display = 'none';
       controlsHintBar.style.display = 'none';
@@ -49,6 +52,15 @@ function setupUI() {
   const btnCloseParty = document.getElementById('btnCloseParty');
   function openPartyModal() {
     window.colorAudio.playUiClick();
+    let initView = document.getElementById('partyInitView');
+    let lobbyView = document.getElementById('partyLobbyView');
+    if (window.roomCode) {
+      if (initView) initView.style.display = 'none';
+      if (lobbyView) lobbyView.style.display = 'block';
+    } else {
+      if (initView) initView.style.display = 'block';
+      if (lobbyView) lobbyView.style.display = 'none';
+    }
     modalParty.style.display = 'flex';
   }
   if (btnHomeParty) btnHomeParty.onclick = openPartyModal;
@@ -194,6 +206,22 @@ function setupUI() {
   const btnCreateParty = document.getElementById('btnCreateParty');
   const btnJoinParty = document.getElementById('btnJoinParty');
   const btnCopyPartyLink = document.getElementById('btnCopyPartyLink');
+  const btnStartRace = document.getElementById('btnStartRace');
+  const btnLeaveParty = document.getElementById('btnLeaveParty');
+  const partyLevelSelect = document.getElementById('partyLevelSelect');
+  if (partyLevelSelect && partyLevelSelect.children.length === 0) {
+    for (let i = 1; i <= 50; i++) {
+      let opt = document.createElement('option');
+      opt.value = i;
+      opt.innerText = 'Level ' + i;
+      partyLevelSelect.appendChild(opt);
+    }
+    partyLevelSelect.onchange = function() {
+      if (window.socket && window.roomCode && window.isHost) {
+        window.socket.emit('selectLevel', { level: parseInt(this.value) });
+      }
+    };
+  }
   if (btnCreateParty) {
     btnCreateParty.onclick = function() {
       createParty();
@@ -207,15 +235,48 @@ function setupUI() {
       }
     };
   }
+  if (btnStartRace) {
+    btnStartRace.onclick = function() {
+      window.colorAudio.playUiClick();
+      if (window.socket && window.roomCode && window.isHost) {
+        window.socket.emit('startRace');
+      }
+    };
+  }
+  if (btnLeaveParty) {
+    btnLeaveParty.onclick = function() {
+      window.colorAudio.playUiClick();
+      leaveParty();
+    };
+  }
+  const btnCopyCode = document.getElementById('btnCopyCode');
+  const colPartyCode = document.getElementById('colPartyCode');
+  if (btnCopyCode) {
+    btnCopyCode.onclick = function() {
+      let code = (window.roomCode || document.getElementById('partyCodeDisplay').innerText).trim();
+      copyTextToClipboard(code, btnCopyCode, 'CODE COPIED: ' + code);
+    };
+  }
+  if (colPartyCode) {
+    colPartyCode.onclick = function() {
+      let code = (window.roomCode || document.getElementById('partyCodeDisplay').innerText).trim();
+      copyTextToClipboard(code, btnCopyCode, 'CODE COPIED: ' + code);
+    };
+  }
   if (btnCopyPartyLink) {
     btnCopyPartyLink.onclick = function() {
-      let code = document.getElementById('partyCodeDisplay').innerText;
-      let url = window.location.origin + window.location.pathname + '?party=' + code;
-      navigator.clipboard.writeText(url).then(function() {
-        btnCopyPartyLink.innerText = 'COPIED!';
-        setTimeout(function() { btnCopyPartyLink.innerText = 'COPY LINK'; }, 2000);
-      });
+      let code = (window.roomCode || document.getElementById('partyCodeDisplay').innerText).trim();
+      let url = window.location.href.split('?')[0] + '?party=' + code;
+      copyTextToClipboard(url, btnCopyPartyLink, 'LINK COPIED!');
     };
+  }
+  let urlParams = new URLSearchParams(window.location.search);
+  let partyParam = urlParams.get('party');
+  if (partyParam) {
+    let joinInput = document.getElementById('inputPartyCode');
+    if (joinInput) joinInput.value = partyParam.toUpperCase().trim();
+    openPartyModal();
+    joinParty(partyParam.toUpperCase().trim());
   }
   updateHomeStats();
   syncSettingsUI();
@@ -368,38 +429,157 @@ function showBanner(text, duration) {
     banner.style.transform = 'translate(-50%, -50%) scale(0.85)';
   }, duration || 2500);
 }
+function getRacerName() {
+  let name = localStorage.getItem('prism_racer_name');
+  if (!name) {
+    name = 'Racer ' + Math.floor(100 + Math.random() * 900);
+    localStorage.setItem('prism_racer_name', name);
+  }
+  return name;
+}
 function createParty() {
   if (!window.socket) return;
-  let chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 4; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
-  window.socket.emit('joinRoom', { code: code, name: 'Host' }, function() {
-    window.roomCode = code;
-    window.gameMode = 'party';
-    document.getElementById('partyCodeDisplay').innerText = code;
-    document.getElementById('partyActiveSection').style.display = 'block';
-    document.getElementById('partyLobbySection').style.display = 'none';
-    showBanner('PARTY CODE: ' + code, 3000);
+  window.colorAudio.init();
+  window.colorAudio.playUiClick();
+  let racerName = getRacerName();
+  window.socket.emit('createRoom', { name: racerName }, function(res) {
+    if (res && res.success) {
+      window.roomCode = res.code;
+      window.isHost = true;
+      window.gameMode = 'party';
+      document.getElementById('partyCodeDisplay').innerText = res.code;
+      document.getElementById('partyInitView').style.display = 'none';
+      document.getElementById('partyLobbyView').style.display = 'block';
+      let startBtn = document.getElementById('btnStartRace');
+      let waitTxt = document.getElementById('guestWaitingText');
+      let lvlSel = document.getElementById('partyLevelSelect');
+      if (startBtn) startBtn.style.display = 'block';
+      if (waitTxt) waitTxt.style.display = 'none';
+      if (lvlSel) {
+        lvlSel.disabled = false;
+        lvlSel.value = res.level || 1;
+      }
+      renderPartyPlayers(res.players);
+      let hudBadge = document.getElementById('hudPartyRoomBadge');
+      if (hudBadge) {
+        hudBadge.innerText = 'PARTY: ' + res.code;
+        hudBadge.style.display = 'inline-block';
+      }
+      showBanner('PARTY CREATED: ' + res.code, 2500);
+    }
   });
 }
 function joinParty(code) {
   if (!window.socket) return;
-  let upper = code.toUpperCase();
-  window.socket.emit('joinRoom', { code: upper, name: 'Racer' }, function() {
-    window.roomCode = upper;
-    window.gameMode = 'party';
-    document.getElementById('partyCodeDisplay').innerText = upper;
-    document.getElementById('partyActiveSection').style.display = 'block';
-    document.getElementById('partyLobbySection').style.display = 'none';
-    document.getElementById('modalParty').style.display = 'none';
-    document.getElementById('homeScreen').style.display = 'none';
-    document.getElementById('gameHeader').style.display = 'flex';
-    document.getElementById('controlsHintBar').style.display = 'flex';
-    window.inGame = true;
-    showBanner('JOINED PARTY: ' + upper, 3000);
+  window.colorAudio.init();
+  window.colorAudio.playUiClick();
+  let upper = (code || '').toUpperCase().trim();
+  if (upper.length < 4) {
+    alert('Please enter a valid 4-character room code.');
+    return;
+  }
+  let racerName = getRacerName();
+  window.socket.emit('joinRoom', { code: upper, name: racerName }, function(res) {
+    if (res && res.success) {
+      window.roomCode = res.code;
+      window.isHost = res.isHost;
+      window.gameMode = 'party';
+      document.getElementById('partyCodeDisplay').innerText = res.code;
+      document.getElementById('partyInitView').style.display = 'none';
+      document.getElementById('partyLobbyView').style.display = 'block';
+      let startBtn = document.getElementById('btnStartRace');
+      let waitTxt = document.getElementById('guestWaitingText');
+      let lvlSel = document.getElementById('partyLevelSelect');
+      if (startBtn) startBtn.style.display = window.isHost ? 'block' : 'none';
+      if (waitTxt) waitTxt.style.display = window.isHost ? 'none' : 'block';
+      if (lvlSel) {
+        lvlSel.disabled = !window.isHost;
+        lvlSel.value = res.level || 1;
+      }
+      renderPartyPlayers(res.players);
+      let hudBadge = document.getElementById('hudPartyRoomBadge');
+      if (hudBadge) {
+        hudBadge.innerText = 'PARTY: ' + res.code;
+        hudBadge.style.display = 'inline-block';
+      }
+      showBanner('JOINED ROOM: ' + res.code, 2500);
+    } else {
+      alert(res && res.message ? res.message : 'Could not join room. Check the code.');
+    }
   });
+}
+function leaveParty() {
+  if (window.socket && window.roomCode) {
+    window.socket.emit('leaveRoom');
+  }
+  window.roomCode = null;
+  window.isHost = false;
+  window.gameMode = 'solo';
+  if (window.clearOpponents) {
+    window.clearOpponents();
+  }
+  let hudBadge = document.getElementById('hudPartyRoomBadge');
+  if (hudBadge) hudBadge.style.display = 'none';
+  let initView = document.getElementById('partyInitView');
+  let lobbyView = document.getElementById('partyLobbyView');
+  if (initView) initView.style.display = 'block';
+  if (lobbyView) lobbyView.style.display = 'none';
+  showBanner('Left Party Room', 2000);
+}
+function copyTextToClipboard(text, btnEl, successMsg) {
+  window.colorAudio.playUiClick();
+  let fallback = function() {
+    let ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.top = '-9999px';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try {
+      document.execCommand('copy');
+      if (btnEl) {
+        let old = btnEl.innerText;
+        btnEl.innerText = 'COPIED!';
+        setTimeout(function() { btnEl.innerText = old; }, 2000);
+      }
+      showBanner(successMsg || 'COPIED TO CLIPBOARD', 2000);
+    } catch (e) {
+      prompt('Copy:', text);
+    }
+    document.body.removeChild(ta);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      if (btnEl) {
+        let old = btnEl.innerText;
+        btnEl.innerText = 'COPIED!';
+        setTimeout(function() { btnEl.innerText = old; }, 2000);
+      }
+      showBanner(successMsg || 'COPIED TO CLIPBOARD', 2000);
+    }).catch(function() {
+      fallback();
+    });
+  } else {
+    fallback();
+  }
+}
+function renderPartyPlayers(players) {
+  let list = document.getElementById('partyPlayersList');
+  if (!list || !players) return;
+  list.innerHTML = '';
+  for (let i = 0; i < players.length; i++) {
+    let p = players[i];
+    let row = document.createElement('div');
+    row.className = 'player-item';
+    let isYou = window.socket && (p.id === window.socket.id);
+    let nameText = p.name + (isYou ? ' (You)' : '');
+    let badgeClass = p.isHost ? 'host' : 'guest';
+    let badgeText = p.isHost ? 'HOST' : 'READY';
+    row.innerHTML = '<span class="player-name">' + nameText + '</span><span class="player-role-badge ' + badgeClass + '">' + badgeText + '</span>';
+    list.appendChild(row);
+  }
 }
 window.ui = {
   setup: setupUI,
@@ -408,5 +588,6 @@ window.ui = {
   updateTimer: updateTimer,
   showVictoryModal: showVictoryModal,
   showBanner: showBanner,
-  updateHomeStats: updateHomeStats
+  updateHomeStats: updateHomeStats,
+  renderPartyPlayers: renderPartyPlayers
 };

@@ -1,4 +1,4 @@
-# 🎨 THE COLOR // Precision 2D Platformer
+# 🎨 PRISM SHIFT — Precision 2D Platformer
 
 > **"The rule is simple: you can only land on platforms that match your color. Open the color wheel to slow down time, pick the right color mid-jump, and don't let the timer run out."**
 
@@ -6,10 +6,10 @@ Built with pure HTML5 Canvas and Web Audio API—zero bloat, zero missing assets
 
 ---
 
-## 🎮 Play Right Now
+## 🎮 Play Live
 
-Server is live:
-👉 **[http://localhost:3000](http://localhost:3000)**
+Play the game online:
+👉 **[https://prism-shift.onrender.com](https://prism-shift.onrender.com)**
 
 ---
 

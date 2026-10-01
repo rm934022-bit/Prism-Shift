@@ -226,22 +226,65 @@ function renderScene(ctx, canvas, playerObj, level, isSlowMo, wheelAngle, oppone
   }
   for (let i = 0; i < opponents.length; i++) {
     let opp = opponents[i];
-    let oppHex = COLOR_HEX[opp.color] || '#ffffff';
+    if (opp.renderX === undefined) {
+      opp.renderX = opp.x;
+      opp.renderY = opp.y;
+    }
+    opp.renderX += (opp.x - opp.renderX) * 0.35;
+    opp.renderY += (opp.y - opp.renderY) * 0.35;
+    let oppHex = COLOR_HEX[opp.color] || '#05D9E8';
+    if (!opp.trail) opp.trail = [];
+    opp.trail.push({ x: opp.renderX, y: opp.renderY, color: opp.color || 'red', alpha: 0.5 });
+    if (opp.trail.length > (isHighGfx ? 6 : 2)) opp.trail.shift();
+    for (let t = 0; t < opp.trail.length; t++) {
+      let tr = opp.trail[t];
+      ctx.save();
+      ctx.globalAlpha = tr.alpha * 0.25;
+      ctx.fillStyle = COLOR_HEX[tr.color] || oppHex;
+      ctx.beginPath();
+      ctx.roundRect(tr.x - 12, tr.y - 16, 24, 32, 6);
+      ctx.fill();
+      ctx.restore();
+    }
+    let oppFacing = opp.facing || 1;
+    let oppScaleX = opp.scaleX || 1.0;
+    let oppScaleY = opp.scaleY || 1.0;
     ctx.save();
-    ctx.translate(opp.x, opp.y);
-    ctx.globalAlpha = 0.65;
+    ctx.translate(opp.renderX, opp.renderY);
+    ctx.scale(oppScaleX * oppFacing, oppScaleY);
     ctx.fillStyle = oppHex;
     if (isHighGfx) {
       ctx.shadowColor = oppHex;
-      ctx.shadowBlur = 8;
+      ctx.shadowBlur = 14;
     }
     ctx.beginPath();
-    ctx.roundRect(-12, -16, 24, 32, 6);
+    ctx.roundRect(-12, -16, 24, 32, 7);
     ctx.fill();
-    ctx.font = 'bold 11px system-ui, sans-serif';
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.beginPath();
+    ctx.roundRect(-8, -12, 16, 24, 4);
+    ctx.fill();
+    ctx.fillStyle = '#0b0f19';
+    ctx.beginPath();
+    ctx.arc(4, -3, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    ctx.save();
+    ctx.translate(opp.renderX, opp.renderY - 26);
+    ctx.font = 'bold 10px JetBrains Mono, monospace';
+    let oppTag = opp.name || 'Racer';
+    let tagW = ctx.measureText(oppTag).width;
+    ctx.fillStyle = 'rgba(11, 15, 25, 0.8)';
+    ctx.strokeStyle = oppHex;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(-tagW / 2 - 6, -14, tagW + 12, 16, 4);
+    ctx.fill();
+    ctx.stroke();
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'center';
-    ctx.fillText(opp.name || 'Friend', 0, -22);
+    ctx.fillText(oppTag, 0, -2);
     ctx.restore();
   }
   if (!playerObj.isDead) {

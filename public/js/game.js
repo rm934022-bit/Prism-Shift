@@ -8,10 +8,12 @@ let isSlowMo = false;
 let timeScale = 1.0;
 let wheelAngle = -Math.PI / 2;
 let selectedWheelColor = 'red';
-let gameMode = 'solo';
+window.gameMode = 'solo';
+window.roomCode = null;
+window.isHost = false;
+window.inGame = false;
 let socket = null;
-let roomCode = null;
-let inGame = false;
+let lastMoveEmitTime = 0;
 const opponents = {};
 let saveData = {
   unlockedLevel: 1,
@@ -67,6 +69,9 @@ function loadLevel(id) {
   currentLevel = JSON.parse(JSON.stringify(found));
   levelTime = 0;
   deaths = 0;
+  if (window.gameMode !== 'party') {
+    clearOpponents();
+  }
   window.resetPlayer(currentLevel.spawn);
   window.ui.updateHUD(currentLevel, levelTime, deaths);
   window.ui.updateHomeStats();
@@ -101,9 +106,8 @@ function onLevelCompleted() {
   }
   saveData.lastLevel = currentLevelIndex;
   writeSave();
-  if (gameMode === 'party' && socket && roomCode) {
+  if (window.gameMode === 'party' && socket && window.roomCode) {
     socket.emit('playerFinishedLevel', {
-      room: roomCode,
       level: currentLevelIndex,
       time: levelTime
     });
@@ -259,14 +263,85 @@ function setupSocket() {
   window.socket = socket;
   socket.on('playerMoved', function(data) {
     if (data.id !== socket.id) {
-      opponents[data.id] = data;
+      if (!opponents[data.id]) {
+        opponents[data.id] = data;
+      } else {
+        Object.assign(opponents[data.id], data);
+      }
     }
   });
   socket.on('playerLeft', function(data) {
-    delete opponents[data.id];
+    if (data && data.id) {
+      delete opponents[data.id];
+      if (window.ui && window.ui.showBanner) {
+        window.ui.showBanner('A racer left the game', 2000);
+      }
+    }
   });
-  socket.on('opponentWon', function(data) {
-    window.ui.showBanner((data.name || 'Friend') + ' REACHED THE PRISM!', 3000);
+  socket.on('roomUpdate', function(data) {
+    if (window.roomCode && data.code === window.roomCode) {
+      window.isHost = (data.host === socket.id);
+      if (window.ui && window.ui.renderPartyPlayers) {
+        window.ui.renderPartyPlayers(data.players);
+      }
+      let startBtn = document.getElementById('btnStartRace');
+      let waitTxt = document.getElementById('guestWaitingText');
+      let lvlSel = document.getElementById('partyLevelSelect');
+      if (startBtn) startBtn.style.display = window.isHost ? 'block' : 'none';
+      if (waitTxt) waitTxt.style.display = window.isHost ? 'none' : 'block';
+      if (lvlSel) {
+        lvlSel.disabled = !window.isHost;
+        if (data.level) lvlSel.value = data.level;
+      }
+      for (let oid in opponents) {
+        let exists = false;
+        for (let i = 0; i < data.players.length; i++) {
+          if (data.players[i].id === oid) {
+            exists = true;
+            break;
+          }
+        }
+        if (!exists) delete opponents[oid];
+      }
+    }
+  });
+  socket.on('levelChanged', function(data) {
+    let lvlSel = document.getElementById('partyLevelSelect');
+    if (lvlSel) lvlSel.value = data.level;
+    if (window.ui && window.ui.showBanner) {
+      window.ui.showBanner('Race level set to Level ' + data.level, 1800);
+    }
+  });
+  socket.on('raceStarting', function(data) {
+    let modalParty = document.getElementById('modalParty');
+    let modalVictory = document.getElementById('modalVictory');
+    let homeScreen = document.getElementById('homeScreen');
+    let gameHeader = document.getElementById('gameHeader');
+    let controlsHintBar = document.getElementById('controlsHintBar');
+    if (modalParty) modalParty.style.display = 'none';
+    if (modalVictory) modalVictory.style.display = 'none';
+    if (homeScreen) homeScreen.style.display = 'none';
+    if (gameHeader) gameHeader.style.display = 'flex';
+    if (controlsHintBar) controlsHintBar.style.display = 'flex';
+    window.inGame = true;
+    for (let id in opponents) {
+      delete opponents[id];
+    }
+    loadLevel(data.level);
+    if (window.ui && window.ui.showBanner) {
+      window.ui.showBanner('GO! RACE STARTED', 2500);
+    }
+    window.colorAudio.init();
+  });
+  socket.on('playerWon', function(data) {
+    let isYou = (data.id === socket.id);
+    if (window.ui && window.ui.showBanner) {
+      if (isYou) {
+        window.ui.showBanner('YOU WON THE RACE! ' + data.time.toFixed(1) + 's', 3500);
+      } else {
+        window.ui.showBanner((data.name || 'Friend') + ' WON THE RACE! ' + data.time.toFixed(1) + 's', 3500);
+      }
+    }
   });
 }
 function startGame() {
@@ -305,18 +380,32 @@ function startGame() {
       oppList,
       dt
     );
-    if (window.inGame && gameMode === 'party' && socket && roomCode) {
-      socket.emit('playerMove', {
-        room: roomCode,
-        x: Math.round(window.player.x),
-        y: Math.round(window.player.y),
-        color: window.player.color
-      });
+    if (window.inGame && window.gameMode === 'party' && socket && window.roomCode) {
+      let now = performance.now();
+      if (now - lastMoveEmitTime > 35) {
+        lastMoveEmitTime = now;
+        socket.emit('playerMove', {
+          x: Math.round(window.player.x),
+          y: Math.round(window.player.y),
+          color: window.player.color,
+          facing: window.player.facing || 1,
+          scaleX: +(window.player.scaleX || 1).toFixed(2),
+          scaleY: +(window.player.scaleY || 1).toFixed(2),
+          vx: Math.round(window.player.vx || 0),
+          vy: Math.round(window.player.vy || 0)
+        });
+      }
     }
     requestAnimationFrame(gameLoop);
   }
   requestAnimationFrame(gameLoop);
 }
+function clearOpponents() {
+  for (let id in opponents) {
+    delete opponents[id];
+  }
+}
+window.clearOpponents = clearOpponents;
 window.loadLevel = loadLevel;
 window.restartLevel = restartLevel;
 window.startGame = startGame;
