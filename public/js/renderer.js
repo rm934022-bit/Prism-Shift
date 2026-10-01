@@ -1,217 +1,118 @@
-// The Color - Minimalist Geometric Art & Camera Renderer
-class ColorRenderer {
-  constructor(canvas) {
-    this.canvas = canvas;
-    this.ctx = canvas.getContext('2d');
-    this.width = canvas.width;
-    this.height = canvas.height;
-
-    this.camera = { x: 0, y: 0 };
-    this.particles = [];
-    this.timeSlowFilter = 0;
-  }
-
-  resize(w, h) {
-    this.canvas.width = w;
-    this.canvas.height = h;
-    this.width = w;
-    this.height = h;
-  }
-
-  // Camera lerp towards player
-  updateCamera(targetX, targetY, dt) {
-    const desiredX = targetX - this.width / 2;
-    const desiredY = targetY - this.height / 2;
-    this.camera.x += (desiredX - this.camera.x) * Math.min(1, 8 * dt);
-    this.camera.y += (desiredY - this.camera.y) * Math.min(1, 8 * dt);
-
-    // Clamp camera within level bounds
-    this.camera.x = Math.max(-100, Math.min(1400 - this.width, this.camera.x));
-    this.camera.y = Math.max(-100, Math.min(900 - this.height, this.camera.y));
-  }
-
-  // Particle Emitters
-  addJumpDust(x, y, color) {
-    for (let i = 0; i < 6; i++) {
-      this.particles.push({
-        x: x + (Math.random() - 0.5) * 16,
-        y: y + 14,
-        vx: (Math.random() - 0.5) * 80,
-        vy: -20 - Math.random() * 30,
-        size: 3 + Math.random() * 3,
-        color: COLOR_HEX[color] || '#fff',
-        alpha: 0.8,
-        life: 0.35
-      });
-    }
-  }
-
-  addColorBurst(x, y, color) {
-    for (let i = 0; i < 16; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 60 + Math.random() * 160;
-      this.particles.push({
-        x,
-        y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        size: 3 + Math.random() * 4,
-        color: COLOR_HEX[color] || '#fff',
-        alpha: 1,
-        life: 0.45 + Math.random() * 0.3
-      });
-    }
-  }
-
-  addDeathBurst(x, y, color) {
-    for (let i = 0; i < 30; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 50 + Math.random() * 240;
-      this.particles.push({
-        x,
-        y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        size: 4 + Math.random() * 5,
-        color: Math.random() > 0.3 ? COLOR_HEX[color] : '#fff',
-        alpha: 1,
-        life: 0.6 + Math.random() * 0.4
-      });
-    }
-  }
-
-  update(dt, isSlowMo) {
-    this.timeSlowFilter += ((isSlowMo ? 1 : 0) - this.timeSlowFilter) * 10 * dt;
-
-    for (let i = this.particles.length - 1; i >= 0; i--) {
-      const p = this.particles[i];
-      p.life -= dt;
-      if (p.life <= 0) {
-        this.particles.splice(i, 1);
-        continue;
-      }
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      p.alpha = Math.max(0, p.life / 0.5);
-    }
-  }
-
-  render(player, level, isSlowMo, wheelAngle, opponents = [], dt = 0.016) {
-    this.update(dt, isSlowMo);
-    this.updateCamera(player.x, player.y, dt);
-
-    const ctx = this.ctx;
-    ctx.clearRect(0, 0, this.width, this.height);
-
-    ctx.save();
-    // Camera Transform
-    ctx.translate(-Math.round(this.camera.x), -Math.round(this.camera.y));
-
-    // 1. Subtle Background Grid
-    this.drawBackground(ctx);
-
-    // 2. Moving Platform Guide Rails
-    this.drawPlatformRails(ctx, level.platforms);
-
-    // 3. Platforms (Solid matching vs Ghost non-matching)
-    this.drawPlatforms(ctx, level.platforms, player.color);
-
-    // 4. Hazards (Spikes & Beams)
-    this.drawHazards(ctx, level.hazards, player.color);
-
-    // 5. Bounce Pads
-    this.drawBouncePads(ctx, level.bouncePads);
-
-    // 6. Prism Gateway (Level Goal)
-    this.drawPortal(ctx, level.portal);
-
-    // 7. Multiplayer Opponents (Ghosts)
-    opponents.forEach(opp => {
-      this.drawOpponent(ctx, opp);
+const camera = { x: 0, y: 0 };
+let particles = [];
+let timeSlowFilter = 0;
+function updateCamera(targetX, targetY, dt, canvasWidth, canvasHeight) {
+  let desiredX = targetX - canvasWidth / 2;
+  let desiredY = targetY - canvasHeight / 2;
+  camera.x += (desiredX - camera.x) * Math.min(1, 8 * dt);
+  camera.y += (desiredY - camera.y) * Math.min(1, 8 * dt);
+  camera.x = Math.max(-100, Math.min(1400 - canvasWidth, camera.x));
+  camera.y = Math.max(-100, Math.min(900 - canvasHeight, camera.y));
+}
+function addColorBurst(x, y, color) {
+  for (let i = 0; i < 16; i++) {
+    let angle = Math.random() * Math.PI * 2;
+    let speed = 60 + Math.random() * 160;
+    particles.push({
+      x: x,
+      y: y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      size: 3 + Math.random() * 4,
+      color: COLOR_HEX[color] || '#fff',
+      alpha: 1,
+      life: 0.45 + Math.random() * 0.3
     });
-
-    // 8. Player Character
-    if (!player.isDead) {
-      this.drawPlayer(ctx, player);
+  }
+}
+function addDeathBurst(x, y, color) {
+  for (let i = 0; i < 30; i++) {
+    let angle = Math.random() * Math.PI * 2;
+    let speed = 50 + Math.random() * 240;
+    particles.push({
+      x: x,
+      y: y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      size: 4 + Math.random() * 5,
+      color: Math.random() > 0.3 ? COLOR_HEX[color] : '#fff',
+      alpha: 1,
+      life: 0.6 + Math.random() * 0.4
+    });
+  }
+}
+function updateParticles(dt, isSlowMo) {
+  timeSlowFilter += ((isSlowMo ? 1 : 0) - timeSlowFilter) * 10 * dt;
+  for (let i = particles.length - 1; i >= 0; i--) {
+    let p = particles[i];
+    p.life -= dt;
+    if (p.life <= 0) {
+      particles.splice(i, 1);
+      continue;
     }
-
-    // 9. Particle Bursts
-    this.drawParticles(ctx);
-
-    ctx.restore();
-
-    // 10. Slow-Motion Vignette & Radial Color Wheel
-    if (this.timeSlowFilter > 0.01) {
-      this.drawSlowMoOverlay(ctx, isSlowMo, wheelAngle, player);
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.alpha = Math.max(0, p.life / 0.5);
+  }
+}
+function renderScene(ctx, canvas, playerObj, level, isSlowMo, wheelAngle, opponents, dt) {
+  updateParticles(dt, isSlowMo);
+  updateCamera(playerObj.x, playerObj.y, dt, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.translate(-Math.round(camera.x), -Math.round(camera.y));
+  ctx.fillStyle = '#0b0f19';
+  ctx.fillRect(camera.x - 200, camera.y - 200, canvas.width + 400, canvas.height + 400);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+  let spacing = 48;
+  let startX = Math.floor((camera.x - 100) / spacing) * spacing;
+  let endX = camera.x + canvas.width + 100;
+  let startY = Math.floor((camera.y - 100) / spacing) * spacing;
+  let endY = camera.y + canvas.height + 100;
+  for (let x = startX; x <= endX; x += spacing) {
+    for (let y = startY; y <= endY; y += spacing) {
+      ctx.fillRect(x, y, 2, 2);
     }
   }
-
-  drawBackground(ctx) {
-    // Elegant deep slate matte background
-    ctx.fillStyle = '#0b0f19';
-    ctx.fillRect(this.camera.x - 200, this.camera.y - 200, this.width + 400, this.height + 400);
-
-    // Minimalist architectural dots
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
-    const spacing = 48;
-    const startX = Math.floor((this.camera.x - 100) / spacing) * spacing;
-    const endX = this.camera.x + this.width + 100;
-    const startY = Math.floor((this.camera.y - 100) / spacing) * spacing;
-    const endY = this.camera.y + this.height + 100;
-
-    for (let x = startX; x <= endX; x += spacing) {
-      for (let y = startY; y <= endY; y += spacing) {
-        ctx.fillRect(x, y, 2, 2);
-      }
-    }
-  }
-
-  drawPlatformRails(ctx, platforms = []) {
-    platforms.forEach(plat => {
+  if (level.platforms) {
+    for (let i = 0; i < level.platforms.length; i++) {
+      let plat = level.platforms[i];
       if (plat.move) {
         ctx.save();
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
         ctx.lineWidth = 2;
         ctx.setLineDash([4, 6]);
         ctx.beginPath();
-        const startX = plat.x - (plat.move.dx || 0);
-        const endX = plat.x + (plat.move.dx || 0);
-        const startY = plat.y - (plat.move.dy || 0);
-        const endY = plat.y + (plat.move.dy || 0);
-        ctx.moveTo(startX + plat.w / 2, startY + plat.h / 2);
-        ctx.lineTo(endX + plat.w / 2, endY + plat.h / 2);
+        let sx = plat.x - (plat.move.dx || 0);
+        let ex = plat.x + (plat.move.dx || 0);
+        let sy = plat.y - (plat.move.dy || 0);
+        let ey = plat.y + (plat.move.dy || 0);
+        ctx.moveTo(sx + plat.w / 2, sy + plat.h / 2);
+        ctx.lineTo(ex + plat.w / 2, ey + plat.h / 2);
         ctx.stroke();
         ctx.restore();
       }
-    });
-  }
-
-  drawPlatforms(ctx, platforms = [], playerColor) {
-    platforms.forEach(plat => {
-      const col = plat.curColor || plat.color;
-      const isSolid = (col === 'white' || col === playerColor);
-      const px = plat.curX !== undefined ? plat.curX : plat.x;
-      const py = plat.curY !== undefined ? plat.curY : plat.y;
-      const hex = COLOR_HEX[col] || '#fff';
-
+    }
+    for (let i = 0; i < level.platforms.length; i++) {
+      let plat = level.platforms[i];
+      let col = plat.curColor || plat.color;
+      let isMatch = (col === 'white' || col === playerObj.color);
+      let px = plat.curX !== undefined ? plat.curX : plat.x;
+      let py = plat.curY !== undefined ? plat.curY : plat.y;
+      let hex = COLOR_HEX[col] || '#fff';
       ctx.save();
-      if (isSolid) {
-        // --- MATCHING SOLID PLATFORM ---
+      if (isMatch) {
         ctx.fillStyle = hex;
         ctx.shadowColor = hex;
         ctx.shadowBlur = 12;
         ctx.beginPath();
         ctx.roundRect(px, py, plat.w, plat.h, 6);
         ctx.fill();
-
-        // Top crisp highlight line
         ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
         ctx.shadowBlur = 0;
         ctx.fillRect(px + 4, py + 2, plat.w - 8, 3);
-
-        // Color carpet animated chevron pattern
         if (plat.isCarpet) {
-          const shift = (Date.now() * 0.05) % 20;
+          let shift = (Date.now() * 0.05) % 20;
           ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
           ctx.lineWidth = 2;
           for (let cx = px + shift; cx < px + plat.w - 10; cx += 24) {
@@ -223,13 +124,11 @@ class ColorRenderer {
           }
         }
       } else {
-        // --- NON-MATCHING GHOST PLATFORM (PLAYER PASSES THROUGH) ---
         ctx.globalAlpha = 0.22;
         ctx.fillStyle = hex;
         ctx.beginPath();
         ctx.roundRect(px, py, plat.w, plat.h, 6);
         ctx.fill();
-
         ctx.globalAlpha = 0.4;
         ctx.strokeStyle = hex;
         ctx.lineWidth = 1.5;
@@ -237,14 +136,13 @@ class ColorRenderer {
         ctx.strokeRect(px, py, plat.w, plat.h);
       }
       ctx.restore();
-    });
+    }
   }
-
-  drawHazards(ctx, hazards = [], playerColor) {
-    hazards.forEach(haz => {
-      const isSafe = (haz.color === playerColor);
-      const hex = haz.color === 'all' ? '#ff0033' : (COLOR_HEX[haz.color] || '#ff0033');
-
+  if (level.hazards) {
+    for (let i = 0; i < level.hazards.length; i++) {
+      let haz = level.hazards[i];
+      let isSafe = (haz.color === playerObj.color);
+      let hex = haz.color === 'all' ? '#ff0033' : (COLOR_HEX[haz.color] || '#ff0033');
       ctx.save();
       ctx.fillStyle = hex;
       ctx.globalAlpha = isSafe ? 0.3 : 1.0;
@@ -252,25 +150,22 @@ class ColorRenderer {
         ctx.shadowColor = hex;
         ctx.shadowBlur = 10;
       }
-
-      // Draw danger spikes
-      const spikeW = 16;
-      const count = Math.floor(haz.w / spikeW);
-      for (let i = 0; i < count; i++) {
-        const sx = haz.x + i * spikeW;
+      let count = Math.floor(haz.w / 16);
+      for (let s = 0; s < count; s++) {
+        let sx = haz.x + s * 16;
         ctx.beginPath();
         ctx.moveTo(sx, haz.y + haz.h);
-        ctx.lineTo(sx + spikeW / 2, haz.y);
-        ctx.lineTo(sx + spikeW, haz.y + haz.h);
+        ctx.lineTo(sx + 8, haz.y);
+        ctx.lineTo(sx + 16, haz.y + haz.h);
         ctx.closePath();
         ctx.fill();
       }
       ctx.restore();
-    });
+    }
   }
-
-  drawBouncePads(ctx, pads = []) {
-    pads.forEach(pad => {
+  if (level.bouncePads) {
+    for (let i = 0; i < level.bouncePads.length; i++) {
+      let pad = level.bouncePads[i];
       ctx.save();
       ctx.fillStyle = '#fff';
       ctx.shadowColor = '#00F59B';
@@ -278,8 +173,6 @@ class ColorRenderer {
       ctx.beginPath();
       ctx.roundRect(pad.x, pad.y, pad.w, pad.h, 4);
       ctx.fill();
-
-      // Upward arrows
       ctx.strokeStyle = '#0b0f19';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -288,205 +181,158 @@ class ColorRenderer {
       ctx.lineTo(pad.x + pad.w / 2 + 6, pad.y + pad.h - 4);
       ctx.stroke();
       ctx.restore();
-    });
+    }
   }
-
-  drawPortal(ctx, portal) {
-    const time = Date.now() * 0.003;
+  if (level.portal) {
+    let time = Date.now() * 0.003;
     ctx.save();
-    ctx.translate(portal.x, portal.y);
-
-    // 4 Concentric diamond rings of Red, Blue, Yellow, Green
-    const rings = ['red', 'blue', 'yellow', 'green'];
-    rings.forEach((col, idx) => {
+    ctx.translate(level.portal.x, level.portal.y);
+    let rings = ['red', 'blue', 'yellow', 'green'];
+    for (let r = 0; r < rings.length; r++) {
       ctx.save();
-      ctx.rotate(time * (idx % 2 === 0 ? 1 : -1) * (1 + idx * 0.2));
-      ctx.strokeStyle = COLOR_HEX[col];
-      ctx.shadowColor = COLOR_HEX[col];
+      ctx.rotate(time * (r % 2 === 0 ? 1 : -1) * (1 + r * 0.2));
+      ctx.strokeStyle = COLOR_HEX[rings[r]];
+      ctx.shadowColor = COLOR_HEX[rings[r]];
       ctx.shadowBlur = 14;
       ctx.lineWidth = 2.5;
-
-      const size = 18 + idx * 8;
+      let sz = 18 + r * 8;
       ctx.beginPath();
-      ctx.moveTo(0, -size);
-      ctx.lineTo(size, 0);
-      ctx.lineTo(0, size);
-      ctx.lineTo(-size, 0);
+      ctx.moveTo(0, -sz);
+      ctx.lineTo(sz, 0);
+      ctx.lineTo(0, sz);
+      ctx.lineTo(-sz, 0);
       ctx.closePath();
       ctx.stroke();
       ctx.restore();
-    });
-
-    // Glowing White Core
+    }
     ctx.fillStyle = '#ffffff';
     ctx.shadowColor = '#ffffff';
     ctx.shadowBlur = 16;
     ctx.beginPath();
     ctx.arc(0, 0, 7, 0, Math.PI * 2);
     ctx.fill();
-
     ctx.restore();
   }
-
-  drawPlayer(ctx, player) {
-    const hex = COLOR_HEX[player.color] || '#FF2A6D';
-
-    // 1. Ghost Trails
-    player.trail.forEach(t => {
-      ctx.save();
-      ctx.globalAlpha = t.alpha * 0.4;
-      ctx.fillStyle = COLOR_HEX[t.color] || hex;
-      ctx.beginPath();
-      ctx.roundRect(t.x - player.width / 2, t.y - player.height / 2, player.width, player.height, 6);
-      ctx.fill();
-      ctx.restore();
-    });
-
-    // 2. Main Player Body (Juicy squash & stretch)
-    ctx.save();
-    ctx.translate(player.x, player.y);
-    ctx.scale(player.scaleX * player.facing, player.scaleY);
-
-    // Glowing aura
-    ctx.fillStyle = hex;
-    ctx.shadowColor = hex;
-    ctx.shadowBlur = 18;
-    ctx.beginPath();
-    ctx.roundRect(-player.width / 2, -player.height / 2, player.width, player.height, 7);
-    ctx.fill();
-
-    // Inner bright center core
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-    ctx.beginPath();
-    ctx.roundRect(-player.width / 2 + 4, -player.height / 2 + 4, player.width - 8, player.height - 8, 4);
-    ctx.fill();
-
-    // Expressive eye looking forward
-    ctx.fillStyle = '#0b0f19';
-    ctx.beginPath();
-    ctx.arc(4, -3, 3.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.restore();
-  }
-
-  drawOpponent(ctx, opp) {
-    const hex = COLOR_HEX[opp.color] || '#ffffff';
+  for (let i = 0; i < opponents.length; i++) {
+    let opp = opponents[i];
+    let oppHex = COLOR_HEX[opp.color] || '#ffffff';
     ctx.save();
     ctx.translate(opp.x, opp.y);
     ctx.globalAlpha = 0.65;
-
-    // Body
-    ctx.fillStyle = hex;
-    ctx.shadowColor = hex;
+    ctx.fillStyle = oppHex;
+    ctx.shadowColor = oppHex;
     ctx.shadowBlur = 8;
     ctx.beginPath();
     ctx.roundRect(-12, -16, 24, 32, 6);
     ctx.fill();
-
-    // Tag
     ctx.font = 'bold 11px system-ui, sans-serif';
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'center';
     ctx.fillText(opp.name || 'Friend', 0, -22);
-
     ctx.restore();
   }
-
-  drawParticles(ctx) {
-    this.particles.forEach(p => {
+  if (!playerObj.isDead) {
+    let hex = COLOR_HEX[playerObj.color] || '#FF2A6D';
+    for (let i = 0; i < playerObj.trail.length; i++) {
+      let t = playerObj.trail[i];
       ctx.save();
-      ctx.globalAlpha = p.alpha;
-      ctx.fillStyle = p.color;
-      ctx.shadowColor = p.color;
-      ctx.shadowBlur = 6;
+      ctx.globalAlpha = t.alpha * 0.4;
+      ctx.fillStyle = COLOR_HEX[t.color] || hex;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.roundRect(t.x - playerObj.width / 2, t.y - playerObj.height / 2, playerObj.width, playerObj.height, 6);
       ctx.fill();
       ctx.restore();
-    });
+    }
+    ctx.save();
+    ctx.translate(playerObj.x, playerObj.y);
+    ctx.scale(playerObj.scaleX * playerObj.facing, playerObj.scaleY);
+    ctx.fillStyle = hex;
+    ctx.shadowColor = hex;
+    ctx.shadowBlur = 18;
+    ctx.beginPath();
+    ctx.roundRect(-playerObj.width / 2, -playerObj.height / 2, playerObj.width, playerObj.height, 7);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.beginPath();
+    ctx.roundRect(-playerObj.width / 2 + 4, -playerObj.height / 2 + 4, playerObj.width - 8, playerObj.height - 8, 4);
+    ctx.fill();
+    ctx.fillStyle = '#0b0f19';
+    ctx.beginPath();
+    ctx.arc(4, -3, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
-
-  // --- SLOW-MOTION RADIAL COLOR WHEEL ---
-  drawSlowMoOverlay(ctx, isSlowMo, currentWheelAngle, player) {
-    const w = this.width;
-    const h = this.height;
-
-    // Vignette
-    const vig = ctx.createRadialGradient(w / 2, h / 2, w * 0.2, w / 2, h / 2, w * 0.7);
-    vig.addColorStop(0, `rgba(5, 8, 16, ${0.4 * this.timeSlowFilter})`);
-    vig.addColorStop(1, `rgba(2, 4, 10, ${0.85 * this.timeSlowFilter})`);
+  for (let i = 0; i < particles.length; i++) {
+    let p = particles[i];
+    ctx.save();
+    ctx.globalAlpha = p.alpha;
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+  if (timeSlowFilter > 0.01) {
+    let w = canvas.width;
+    let h = canvas.height;
+    let vig = ctx.createRadialGradient(w / 2, h / 2, w * 0.2, w / 2, h / 2, w * 0.7);
+    vig.addColorStop(0, `rgba(5, 8, 16, ${0.4 * timeSlowFilter})`);
+    vig.addColorStop(1, `rgba(2, 4, 10, ${0.85 * timeSlowFilter})`);
     ctx.fillStyle = vig;
     ctx.fillRect(0, 0, w, h);
-
     if (isSlowMo) {
-      // Screen space player location
-      const screenX = player.x - this.camera.x;
-      const screenY = player.y - this.camera.y;
-
-      const radius = 75;
-      const innerRadius = 38;
-
+      let screenX = playerObj.x - camera.x;
+      let screenY = playerObj.y - camera.y;
+      let radius = 75;
+      let innerRadius = 38;
       ctx.save();
       ctx.translate(screenX, screenY);
-
-      // 4 Quadrants:
-      // Top: Red (-PI/2)
-      // Right: Blue (0)
-      // Bottom: Yellow (PI/2)
-      // Left: Green (PI)
-      const quadrants = [
-        { color: 'blue', start: -Math.PI / 4, end: Math.PI / 4, mid: 0, label: 'BLUE [2]' },
-        { color: 'yellow', start: Math.PI / 4, end: 3 * Math.PI / 4, mid: Math.PI / 2, label: 'YELLOW [3]' },
-        { color: 'green', start: 3 * Math.PI / 4, end: 5 * Math.PI / 4, mid: Math.PI, label: 'GREEN [4]' },
-        { color: 'red', start: -3 * Math.PI / 4, end: -Math.PI / 4, mid: -Math.PI / 2, label: 'RED [1]' }
+      let quads = [
+        { color: 'blue', start: -Math.PI / 4, end: Math.PI / 4, mid: 0 },
+        { color: 'yellow', start: Math.PI / 4, end: 3 * Math.PI / 4, mid: Math.PI / 2 },
+        { color: 'green', start: 3 * Math.PI / 4, end: 5 * Math.PI / 4, mid: Math.PI },
+        { color: 'red', start: -3 * Math.PI / 4, end: -Math.PI / 4, mid: -Math.PI / 2 }
       ];
-
-      // Determine active quadrant from angle
-      let normAngle = currentWheelAngle;
-      while (normAngle > Math.PI) normAngle -= Math.PI * 2;
-      while (normAngle < -Math.PI) normAngle += Math.PI * 2;
-
-      quadrants.forEach(q => {
-        let isHovered = false;
-        if (q.color === 'blue') isHovered = (normAngle >= -Math.PI / 4 && normAngle <= Math.PI / 4);
-        else if (q.color === 'yellow') isHovered = (normAngle > Math.PI / 4 && normAngle <= 3 * Math.PI / 4);
-        else if (q.color === 'red') isHovered = (normAngle < -Math.PI / 4 && normAngle >= -3 * Math.PI / 4);
-        else if (q.color === 'green') isHovered = (normAngle > 3 * Math.PI / 4 || normAngle < -3 * Math.PI / 4);
-
-        const hex = COLOR_HEX[q.color];
+      let norm = wheelAngle;
+      while (norm > Math.PI) norm -= Math.PI * 2;
+      while (norm < -Math.PI) norm += Math.PI * 2;
+      for (let q = 0; q < quads.length; q++) {
+        let quad = quads[q];
+        let isHover = false;
+        if (quad.color === 'blue') isHover = (norm >= -Math.PI / 4 && norm <= Math.PI / 4);
+        else if (quad.color === 'yellow') isHover = (norm > Math.PI / 4 && norm <= 3 * Math.PI / 4);
+        else if (quad.color === 'red') isHover = (norm < -Math.PI / 4 && norm >= -3 * Math.PI / 4);
+        else if (quad.color === 'green') isHover = (norm > 3 * Math.PI / 4 || norm < -3 * Math.PI / 4);
+        let qHex = COLOR_HEX[quad.color];
         ctx.save();
         ctx.beginPath();
-        ctx.arc(0, 0, isHovered ? radius + 10 : radius, q.start + 0.05, q.end - 0.05);
-        ctx.arc(0, 0, innerRadius, q.end - 0.05, q.start + 0.05, true);
+        ctx.arc(0, 0, isHover ? radius + 10 : radius, quad.start + 0.05, quad.end - 0.05);
+        ctx.arc(0, 0, innerRadius, quad.end - 0.05, quad.start + 0.05, true);
         ctx.closePath();
-
-        ctx.fillStyle = hex;
-        ctx.globalAlpha = isHovered ? 0.95 : 0.45;
-        if (isHovered) {
-          ctx.shadowColor = hex;
+        ctx.fillStyle = qHex;
+        ctx.globalAlpha = isHover ? 0.95 : 0.45;
+        if (isHover) {
+          ctx.shadowColor = qHex;
           ctx.shadowBlur = 20;
         }
         ctx.fill();
-
-        // Label
-        const labelR = (radius + innerRadius) / 2;
-        const lx = Math.cos(q.mid) * labelR;
-        const ly = Math.sin(q.mid) * labelR;
+        let labelR = (radius + innerRadius) / 2;
+        let lx = Math.cos(quad.mid) * labelR;
+        let ly = Math.sin(quad.mid) * labelR;
         ctx.font = 'bold 10px system-ui, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = '#fff';
         ctx.shadowBlur = 0;
-        ctx.fillText(q.color.toUpperCase(), lx, ly);
-
+        ctx.fillText(quad.color.toUpperCase(), lx, ly);
         ctx.restore();
-      });
-
-      // Directional pointer arrow
+      }
       ctx.save();
-      ctx.rotate(currentWheelAngle);
+      ctx.rotate(wheelAngle);
       ctx.fillStyle = '#fff';
       ctx.beginPath();
       ctx.moveTo(innerRadius - 6, 0);
@@ -495,22 +341,22 @@ class ColorRenderer {
       ctx.closePath();
       ctx.fill();
       ctx.restore();
-
-      // Center slow-mo badge
       ctx.fillStyle = '#0b0f19';
       ctx.beginPath();
       ctx.arc(0, 0, innerRadius - 4, 0, Math.PI * 2);
       ctx.fill();
-
       ctx.font = 'bold 9px system-ui, sans-serif';
       ctx.fillStyle = '#fff';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('SLOW-MO', 0, 0);
-
       ctx.restore();
     }
   }
 }
-
-window.ColorRenderer = ColorRenderer;
+window.renderer = {
+  render: renderScene,
+  addColorBurst: addColorBurst,
+  addDeathBurst: addDeathBurst,
+  camera: camera
+};

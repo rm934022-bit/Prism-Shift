@@ -1,319 +1,255 @@
-// The Color - 2D Platformer Physics & Player Kinematics
-class PlayerController {
-  constructor() {
-    this.width = 24;
-    this.height = 32;
-    this.x = 100;
-    this.y = 500;
-    this.vx = 0;
-    this.vy = 0;
-    this.color = 'red';
-
-    // Physics parameters
-    this.gravity = 1450;
-    this.maxSpeed = 280;
-    this.accel = 1800;
-    this.friction = 1400;
-    this.jumpForce = -520;
-    this.wallJumpForceX = 320;
-    this.wallJumpForceY = -480;
-
-    // Game feel & buffers
-    this.isGrounded = false;
-    this.coyoteTime = 0; // jump grace period after leaving edge
-    this.jumpBuffer = 0; // jump input buffer before landing
-    this.isOnWall = 0; // -1 for left wall, 1 for right wall, 0 for none
-    this.isDead = false;
-
-    // Visuals & Squash/Stretch
-    this.scaleX = 1.0;
-    this.scaleY = 1.0;
-    this.trail = [];
-    this.facing = 1; // 1 right, -1 left
+const player = {
+  width: 24,
+  height: 32,
+  x: 100,
+  y: 500,
+  vx: 0,
+  vy: 0,
+  color: 'red',
+  gravity: 1450,
+  maxSpeed: 280,
+  accel: 1800,
+  friction: 1400,
+  jumpForce: -520,
+  wallJumpForceX: 320,
+  wallJumpForceY: -480,
+  isGrounded: false,
+  coyoteTime: 0,
+  jumpBuffer: 0,
+  isOnWall: 0,
+  isDead: false,
+  scaleX: 1.0,
+  scaleY: 1.0,
+  trail: [],
+  facing: 1,
+  onCarpet: false
+};
+function resetPlayer(spawn) {
+  player.x = spawn.x;
+  player.y = spawn.y;
+  player.vx = 0;
+  player.vy = 0;
+  player.color = spawn.color || 'red';
+  player.isGrounded = false;
+  player.isDead = false;
+  player.coyoteTime = 0;
+  player.jumpBuffer = 0;
+  player.isOnWall = 0;
+  player.scaleX = 1.0;
+  player.scaleY = 1.0;
+  player.trail = [];
+}
+function setPlayerColor(newColor) {
+  if (player.color !== newColor) {
+    player.color = newColor;
+    window.colorAudio.playColorSwitch(newColor);
+    return true;
   }
-
-  reset(spawn) {
-    this.x = spawn.x;
-    this.y = spawn.y;
-    this.vx = 0;
-    this.vy = 0;
-    this.color = spawn.color || 'red';
-    this.isGrounded = false;
-    this.isDead = false;
-    this.coyoteTime = 0;
-    this.jumpBuffer = 0;
-    this.isOnWall = 0;
-    this.scaleX = 1.0;
-    this.scaleY = 1.0;
-    this.trail = [];
+  return false;
+}
+function updatePlayer(dt, input, level, timeScale) {
+  if (player.isDead) return;
+  let effDt = dt * timeScale;
+  if (player.isGrounded) {
+    player.coyoteTime = 0.12;
+  } else {
+    player.coyoteTime = Math.max(0, player.coyoteTime - effDt);
   }
-
-  setColor(newColor) {
-    if (this.color !== newColor) {
-      this.color = newColor;
-      window.colorAudio.playColorSwitch(newColor);
-      return true;
+  if (input.jumpPressed) {
+    player.jumpBuffer = 0.12;
+  } else {
+    player.jumpBuffer = Math.max(0, player.jumpBuffer - effDt);
+  }
+  let targetSpeed = 0;
+  if (input.left) {
+    targetSpeed -= player.maxSpeed;
+    player.facing = -1;
+  }
+  if (input.right) {
+    targetSpeed += player.maxSpeed;
+    player.facing = 1;
+  }
+  if (player.onCarpet) {
+    targetSpeed *= 1.35;
+  }
+  if (targetSpeed !== 0) {
+    if (Math.sign(player.vx) !== Math.sign(targetSpeed)) {
+      player.vx += Math.sign(targetSpeed) * player.friction * effDt * 1.5;
     }
-    return false;
-  }
-
-  update(dt, input, level, timeScale = 1.0) {
-    if (this.isDead) return;
-
-    const effDt = dt * timeScale;
-
-    // Handle Timers
-    if (this.isGrounded) {
-      this.coyoteTime = 0.12;
+    player.vx += Math.sign(targetSpeed) * player.accel * effDt;
+    if (Math.abs(player.vx) > Math.abs(targetSpeed)) {
+      player.vx = targetSpeed;
+    }
+  } else {
+    let fric = player.isGrounded ? player.friction : player.friction * 0.4;
+    if (Math.abs(player.vx) < fric * effDt) {
+      player.vx = 0;
     } else {
-      this.coyoteTime = Math.max(0, this.coyoteTime - effDt);
+      player.vx -= Math.sign(player.vx) * fric * effDt;
     }
-
-    if (input.jumpPressed) {
-      this.jumpBuffer = 0.12;
+  }
+  let isSliding = false;
+  if (!player.isGrounded && player.isOnWall !== 0 && player.vy > 0) {
+    if ((player.isOnWall === -1 && input.left) || (player.isOnWall === 1 && input.right)) {
+      isSliding = true;
+      player.vy = Math.min(player.vy, 140);
+    }
+  }
+  if (!isSliding) {
+    player.vy += player.gravity * effDt;
+    player.vy = Math.min(player.vy, 950);
+  }
+  if (player.jumpBuffer > 0) {
+    if (player.coyoteTime > 0) {
+      player.vy = player.jumpForce;
+      player.jumpBuffer = 0;
+      player.coyoteTime = 0;
+      player.isGrounded = false;
+      player.scaleX = 0.7;
+      player.scaleY = 1.3;
+      window.colorAudio.playJump();
+    } else if (player.isOnWall !== 0) {
+      player.vy = player.wallJumpForceY;
+      player.vx = -player.isOnWall * player.wallJumpForceX;
+      player.jumpBuffer = 0;
+      player.isOnWall = 0;
+      player.scaleX = 0.8;
+      player.scaleY = 1.25;
+      window.colorAudio.playWallJump();
+    }
+  }
+  if (!input.jumpHold && player.vy < -160) {
+    player.vy = -160;
+  }
+  handleMoveAndCollision(effDt, level);
+  player.trail.push({ x: player.x, y: player.y, color: player.color, alpha: 0.6 });
+  if (player.trail.length > 8) {
+    player.trail.shift();
+  }
+  player.scaleX += (1.0 - player.scaleX) * 14 * effDt;
+  player.scaleY += (1.0 - player.scaleY) * 14 * effDt;
+  if (player.y > 850) {
+    killPlayer();
+  }
+}
+function handleMoveAndCollision(dt, level) {
+  player.isGrounded = false;
+  player.isOnWall = 0;
+  player.onCarpet = false;
+  for (let i = 0; i < level.platforms.length; i++) {
+    let plat = level.platforms[i];
+    if (plat.move) {
+      plat.moveTimer = (plat.moveTimer || 0) + dt * plat.move.speed;
+      let progress = Math.sin(plat.moveTimer + (plat.move.phase || 0));
+      plat.curX = plat.x + (plat.move.dx || 0) * progress;
+      plat.curY = plat.y + (plat.move.dy || 0) * progress;
+      plat.vx = ((plat.move.dx || 0) * Math.cos(plat.moveTimer + (plat.move.phase || 0)) * plat.move.speed);
+      plat.vy = ((plat.move.dy || 0) * Math.cos(plat.moveTimer + (plat.move.phase || 0)) * plat.move.speed);
     } else {
-      this.jumpBuffer = Math.max(0, this.jumpBuffer - effDt);
+      plat.curX = plat.x;
+      plat.curY = plat.y;
+      plat.vx = 0;
+      plat.vy = 0;
     }
-
-    // Horizontal Movement
-    let targetSpeed = 0;
-    if (input.left) {
-      targetSpeed -= this.maxSpeed;
-      this.facing = -1;
-    }
-    if (input.right) {
-      targetSpeed += this.maxSpeed;
-      this.facing = 1;
-    }
-
-    // Check if on active Color Carpet (speed boost!)
-    if (this.onCarpet) {
-      targetSpeed *= 1.35;
-    }
-
-    // Accelerate / Decelerate
-    if (targetSpeed !== 0) {
-      if (Math.sign(this.vx) !== Math.sign(targetSpeed)) {
-        this.vx += Math.sign(targetSpeed) * this.friction * effDt * 1.5;
-      }
-      this.vx += Math.sign(targetSpeed) * this.accel * effDt;
-      if (Math.abs(this.vx) > Math.abs(targetSpeed)) {
-        this.vx = targetSpeed;
-      }
+    if (plat.colorCycle && plat.cycleInterval) {
+      plat.cycleTime = (plat.cycleTime || 0) + dt;
+      let phaseOffset = plat.cyclePhase || 0;
+      let idx = Math.floor((plat.cycleTime + phaseOffset) / plat.cycleInterval) % plat.colorCycle.length;
+      plat.curColor = plat.colorCycle[idx];
     } else {
-      // Apply ground / air friction
-      const fric = this.isGrounded ? this.friction : this.friction * 0.4;
-      if (Math.abs(this.vx) < fric * effDt) {
-        this.vx = 0;
-      } else {
-        this.vx -= Math.sign(this.vx) * fric * effDt;
-      }
-    }
-
-    // Wall Slide Logic
-    let isSliding = false;
-    if (!this.isGrounded && this.isOnWall !== 0 && this.vy > 0) {
-      if ((this.isOnWall === -1 && input.left) || (this.isOnWall === 1 && input.right)) {
-        isSliding = true;
-        this.vy = Math.min(this.vy, 140); // slow descent on wall
-      }
-    }
-
-    // Gravity
-    if (!isSliding) {
-      this.vy += this.gravity * effDt;
-      this.vy = Math.min(this.vy, 950); // terminal velocity
-    }
-
-    // Jump Execution
-    if (this.jumpBuffer > 0) {
-      if (this.coyoteTime > 0) {
-        // Normal Jump
-        this.vy = this.jumpForce;
-        this.jumpBuffer = 0;
-        this.coyoteTime = 0;
-        this.isGrounded = false;
-        this.scaleX = 0.7;
-        this.scaleY = 1.3; // Stretch
-        window.colorAudio.playJump();
-      } else if (this.isOnWall !== 0) {
-        // Wall Jump!
-        this.vy = this.wallJumpForceY;
-        this.vx = -this.isOnWall * this.wallJumpForceX;
-        this.jumpBuffer = 0;
-        this.isOnWall = 0;
-        this.scaleX = 0.8;
-        this.scaleY = 1.25;
-        window.colorAudio.playWallJump();
-      }
-    }
-
-    // Variable jump height: release early to cut jump
-    if (!input.jumpHold && this.vy < -160) {
-      this.vy = -160;
-    }
-
-    // Collision Detection & Movement Resolution
-    this.moveAndCollide(effDt, level);
-
-    // Trail records
-    this.trail.push({ x: this.x, y: this.y, color: this.color, alpha: 0.6 });
-    if (this.trail.length > 8) {
-      this.trail.shift();
-    }
-
-    // Ease squash & stretch back to 1.0
-    this.scaleX += (1.0 - this.scaleX) * 14 * effDt;
-    this.scaleY += (1.0 - this.scaleY) * 14 * effDt;
-
-    // Out of bounds check
-    if (this.y > 850) {
-      this.die();
+      plat.curColor = plat.color;
     }
   }
-
-  moveAndCollide(dt, level) {
-    this.isGrounded = false;
-    this.isOnWall = 0;
-    this.onCarpet = false;
-
-    // Update level moving & cycling platforms first
-    level.platforms.forEach(plat => {
-      // 1. Moving Platform Translation
-      if (plat.move) {
-        plat.moveTimer = (plat.moveTimer || 0) + dt * plat.move.speed;
-        const progress = Math.sin(plat.moveTimer + (plat.move.phase || 0));
-        plat.curX = plat.x + (plat.move.dx || 0) * progress;
-        plat.curY = plat.y + (plat.move.dy || 0) * progress;
-        plat.vx = ((plat.move.dx || 0) * Math.cos(plat.moveTimer + (plat.move.phase || 0)) * plat.move.speed);
-        plat.vy = ((plat.move.dy || 0) * Math.cos(plat.moveTimer + (plat.move.phase || 0)) * plat.move.speed);
-      } else {
-        plat.curX = plat.x;
-        plat.curY = plat.y;
-        plat.vx = 0;
-        plat.vy = 0;
+  player.x += player.vx * dt;
+  for (let i = 0; i < level.platforms.length; i++) {
+    let plat = level.platforms[i];
+    if (!isSolid(plat)) continue;
+    let px = plat.curX;
+    let py = plat.curY;
+    if (boxOverlap(player.x, player.y, player.width, player.height, px, py, plat.w, plat.h)) {
+      if (player.vx > 0) {
+        player.x = px - player.width / 2;
+        player.vx = 0;
+        player.isOnWall = 1;
+      } else if (player.vx < 0) {
+        player.x = px + plat.w + player.width / 2;
+        player.vx = 0;
+        player.isOnWall = -1;
       }
-
-      // 2. Color Cycling Platform
-      if (plat.colorCycle && plat.cycleInterval) {
-        plat.cycleTime = (plat.cycleTime || 0) + dt;
-        const phaseOffset = plat.cyclePhase || 0;
-        const idx = Math.floor((plat.cycleTime + phaseOffset) / plat.cycleInterval) % plat.colorCycle.length;
-        plat.curColor = plat.colorCycle[idx];
-      } else {
-        plat.curColor = plat.color;
-      }
-    });
-
-    // 1. Horizontal Motion & Collision
-    this.x += this.vx * dt;
-    level.platforms.forEach(plat => {
-      if (!this.isPlatformSolid(plat)) return;
-
-      const px = plat.curX;
-      const py = plat.curY;
-
-      if (this.checkOverlap(this.x, this.y, this.width, this.height, px, py, plat.w, plat.h)) {
-        if (this.vx > 0) {
-          this.x = px - this.width / 2;
-          this.vx = 0;
-          this.isOnWall = 1;
-        } else if (this.vx < 0) {
-          this.x = px + plat.w + this.width / 2;
-          this.vx = 0;
-          this.isOnWall = -1;
-        }
-      }
-    });
-
-    // 2. Vertical Motion & Collision
-    this.y += this.vy * dt;
-    level.platforms.forEach(plat => {
-      if (!this.isPlatformSolid(plat)) return;
-
-      const px = plat.curX;
-      const py = plat.curY;
-
-      if (this.checkOverlap(this.x, this.y, this.width, this.height, px, py, plat.w, plat.h)) {
-        if (this.vy > 0) {
-          // Landing on top of platform
-          this.y = py - this.height / 2;
-          this.vy = 0;
-          this.isGrounded = true;
-
-          // Riding moving platform
-          if (plat.vx || plat.vy) {
-            this.x += plat.vx * dt;
-            this.y += plat.vy * dt;
-          }
-
-          if (plat.isCarpet) {
-            this.onCarpet = true;
-          }
-
-          // Squash on landing
-          if (this.scaleY > 0.9) {
-            this.scaleX = 1.25;
-            this.scaleY = 0.75;
-            window.colorAudio.playLand();
-          }
-        } else if (this.vy < 0) {
-          // Hitting ceiling
-          this.y = py + plat.h + this.height / 2;
-          this.vy = 0;
-        }
-      }
-    });
-
-    // 3. Bounce Pad Checks
-    if (level.bouncePads) {
-      level.bouncePads.forEach(pad => {
-        if (this.checkOverlap(this.x, this.y, this.width, this.height, pad.x, pad.y, pad.w, pad.h)) {
-          this.vy = -(pad.force || 700);
-          this.scaleX = 0.6;
-          this.scaleY = 1.4;
-          window.colorAudio.playBouncePad();
-        }
-      });
-    }
-
-    // 4. Hazard Spike Checks
-    if (level.hazards) {
-      level.hazards.forEach(haz => {
-        // If hazard matches player color, it is safe! If not, it is lethal!
-        if (haz.color !== this.color) {
-          if (this.checkOverlap(this.x, this.y, this.width, this.height, haz.x, haz.y, haz.w, haz.h)) {
-            this.die();
-          }
-        }
-      });
     }
   }
-
-  isPlatformSolid(plat) {
-    const col = plat.curColor || plat.color;
-    // Neutral white platform is always solid!
-    if (col === 'white') return true;
-    // Colored platforms are ONLY solid if matching player's current color!
-    return col === this.color;
+  player.y += player.vy * dt;
+  for (let i = 0; i < level.platforms.length; i++) {
+    let plat = level.platforms[i];
+    if (!isSolid(plat)) continue;
+    let px = plat.curX;
+    let py = plat.curY;
+    if (boxOverlap(player.x, player.y, player.width, player.height, px, py, plat.w, plat.h)) {
+      if (player.vy > 0) {
+        player.y = py - player.height / 2;
+        player.vy = 0;
+        player.isGrounded = true;
+        if (plat.vx || plat.vy) {
+          player.x += plat.vx * dt;
+          player.y += plat.vy * dt;
+        }
+        if (plat.isCarpet) {
+          player.onCarpet = true;
+        }
+        if (player.scaleY > 0.9) {
+          player.scaleX = 1.25;
+          player.scaleY = 0.75;
+          window.colorAudio.playLand();
+        }
+      } else if (player.vy < 0) {
+        player.y = py + plat.h + player.height / 2;
+        player.vy = 0;
+      }
+    }
   }
-
-  checkOverlap(cx, cy, cw, ch, rx, ry, rw, rh) {
-    const left = cx - cw / 2;
-    const right = cx + cw / 2;
-    const top = cy - ch / 2;
-    const bottom = cy + ch / 2;
-    return left < rx + rw && right > rx && top < ry + rh && bottom > ry;
+  if (level.bouncePads) {
+    for (let i = 0; i < level.bouncePads.length; i++) {
+      let pad = level.bouncePads[i];
+      if (boxOverlap(player.x, player.y, player.width, player.height, pad.x, pad.y, pad.w, pad.h)) {
+        player.vy = -(pad.force || 700);
+        player.scaleX = 0.6;
+        player.scaleY = 1.4;
+        window.colorAudio.playBouncePad();
+      }
+    }
   }
-
-  die() {
-    if (this.isDead) return;
-    this.isDead = true;
-    window.colorAudio.playDeath();
-    if (window.gameInstance) {
-      window.gameInstance.onPlayerDeath();
+  if (level.hazards) {
+    for (let i = 0; i < level.hazards.length; i++) {
+      let haz = level.hazards[i];
+      if (haz.color !== player.color) {
+        if (boxOverlap(player.x, player.y, player.width, player.height, haz.x, haz.y, haz.w, haz.h)) {
+          killPlayer();
+        }
+      }
     }
   }
 }
-
-window.PlayerController = PlayerController;
+function isSolid(plat) {
+  let col = plat.curColor || plat.color;
+  if (col === 'white') return true;
+  return col === player.color;
+}
+function boxOverlap(cx, cy, cw, ch, rx, ry, rw, rh) {
+  let left = cx - cw / 2;
+  let right = cx + cw / 2;
+  let top = cy - ch / 2;
+  let bottom = cy + ch / 2;
+  return left < rx + rw && right > rx && top < ry + rh && bottom > ry;
+}
+function killPlayer() {
+  if (player.isDead) return;
+  player.isDead = true;
+  window.colorAudio.playDeath();
+  if (window.onPlayerDeathCallback) {
+    window.onPlayerDeathCallback();
+  }
+}
+window.player = player;
+window.resetPlayer = resetPlayer;
+window.setPlayerColor = setPlayerColor;
+window.updatePlayer = updatePlayer;
