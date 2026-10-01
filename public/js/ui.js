@@ -1,30 +1,147 @@
 let currentTierTab = 1;
 function setupUI() {
-  const btnOpenLevels = document.getElementById('btnOpenLevels');
+  const homeScreen = document.getElementById('homeScreen');
+  const gameHeader = document.getElementById('gameHeader');
+  const controlsHintBar = document.getElementById('controlsHintBar');
   const modalLevels = document.getElementById('modalLevels');
-  const btnCloseLevels = document.getElementById('btnCloseLevels');
-  if (btnOpenLevels && modalLevels) {
-    btnOpenLevels.onclick = function() {
+  const modalParty = document.getElementById('modalParty');
+  const modalSettings = document.getElementById('modalSettings');
+  const btnHomePlay = document.getElementById('btnHomePlay');
+  if (btnHomePlay) {
+    btnHomePlay.onclick = function() {
+      window.colorAudio.init();
       window.colorAudio.playUiClick();
-      renderLevelGrid();
-      modalLevels.style.display = 'flex';
+      homeScreen.style.display = 'none';
+      gameHeader.style.display = 'flex';
+      controlsHintBar.style.display = 'flex';
+      window.inGame = true;
     };
+  }
+  const btnBackHome = document.getElementById('btnBackHome');
+  if (btnBackHome) {
+    btnBackHome.onclick = function() {
+      window.colorAudio.playUiClick();
+      window.inGame = false;
+      homeScreen.style.display = 'flex';
+      gameHeader.style.display = 'none';
+      controlsHintBar.style.display = 'none';
+      updateHomeStats();
+    };
+  }
+  const btnHomeLevels = document.getElementById('btnHomeLevels');
+  const btnOpenLevels = document.getElementById('btnOpenLevels');
+  const btnCloseLevels = document.getElementById('btnCloseLevels');
+  function openLevelsModal() {
+    window.colorAudio.playUiClick();
+    renderLevelGrid();
+    modalLevels.style.display = 'flex';
+  }
+  if (btnHomeLevels) btnHomeLevels.onclick = openLevelsModal;
+  if (btnOpenLevels) btnOpenLevels.onclick = openLevelsModal;
+  if (btnCloseLevels) {
     btnCloseLevels.onclick = function() {
       window.colorAudio.playUiClick();
       modalLevels.style.display = 'none';
     };
   }
+  const btnHomeParty = document.getElementById('btnHomeParty');
   const btnOpenParty = document.getElementById('btnOpenParty');
-  const modalParty = document.getElementById('modalParty');
   const btnCloseParty = document.getElementById('btnCloseParty');
-  if (btnOpenParty && modalParty) {
-    btnOpenParty.onclick = function() {
-      window.colorAudio.playUiClick();
-      modalParty.style.display = 'flex';
-    };
+  function openPartyModal() {
+    window.colorAudio.playUiClick();
+    modalParty.style.display = 'flex';
+  }
+  if (btnHomeParty) btnHomeParty.onclick = openPartyModal;
+  if (btnOpenParty) btnOpenParty.onclick = openPartyModal;
+  if (btnCloseParty) {
     btnCloseParty.onclick = function() {
       window.colorAudio.playUiClick();
       modalParty.style.display = 'none';
+    };
+  }
+  const btnHomeSettings = document.getElementById('btnHomeSettings');
+  const btnOpenSettings = document.getElementById('btnOpenSettings');
+  const btnCloseSettings = document.getElementById('btnCloseSettings');
+  function openSettingsModal() {
+    window.colorAudio.playUiClick();
+    syncSettingsUI();
+    modalSettings.style.display = 'flex';
+  }
+  if (btnHomeSettings) btnHomeSettings.onclick = openSettingsModal;
+  if (btnOpenSettings) btnOpenSettings.onclick = openSettingsModal;
+  if (btnCloseSettings) {
+    btnCloseSettings.onclick = function() {
+      window.colorAudio.playUiClick();
+      modalSettings.style.display = 'none';
+    };
+  }
+  const btnHomeSfxToggle = document.getElementById('btnHomeSfxToggle');
+  const btnSettingSfx = document.getElementById('btnSettingSfx');
+  function toggleSfx() {
+    let muted = window.colorAudio.toggleMute();
+    window.settings.sfx = !muted;
+    saveSettings();
+    syncSettingsUI();
+  }
+  if (btnHomeSfxToggle) btnHomeSfxToggle.onclick = toggleSfx;
+  if (btnSettingSfx) btnSettingSfx.onclick = toggleSfx;
+  const btnHomeBgmToggle = document.getElementById('btnHomeBgmToggle');
+  const btnSettingBgm = document.getElementById('btnSettingBgm');
+  function toggleBgm() {
+    window.colorAudio.init();
+    let isMusic = window.colorAudio.toggleMusic();
+    window.settings.music = isMusic;
+    saveSettings();
+    syncSettingsUI();
+  }
+  if (btnHomeBgmToggle) btnHomeBgmToggle.onclick = toggleBgm;
+  if (btnSettingBgm) btnSettingBgm.onclick = toggleBgm;
+  const btnGfxHigh = document.getElementById('btnGfxHigh');
+  const btnGfxLow = document.getElementById('btnGfxLow');
+  if (btnGfxHigh && btnGfxLow) {
+    btnGfxHigh.onclick = function() {
+      window.settings.graphics = 'high';
+      saveSettings();
+      syncSettingsUI();
+    };
+    btnGfxLow.onclick = function() {
+      window.settings.graphics = 'low';
+      saveSettings();
+      syncSettingsUI();
+    };
+  }
+  const btnPartHigh = document.getElementById('btnPartHigh');
+  const btnPartLow = document.getElementById('btnPartLow');
+  if (btnPartHigh && btnPartLow) {
+    btnPartHigh.onclick = function() {
+      window.settings.particles = 'high';
+      saveSettings();
+      syncSettingsUI();
+    };
+    btnPartLow.onclick = function() {
+      window.settings.particles = 'low';
+      saveSettings();
+      syncSettingsUI();
+    };
+  }
+  const btnSettingShake = document.getElementById('btnSettingShake');
+  if (btnSettingShake) {
+    btnSettingShake.onclick = function() {
+      window.settings.shake = !window.settings.shake;
+      saveSettings();
+      syncSettingsUI();
+    };
+  }
+  const btnResetSave = document.getElementById('btnResetSave');
+  if (btnResetSave) {
+    btnResetSave.onclick = function() {
+      if (confirm('Are you sure you want to reset all game progress?')) {
+        localStorage.removeItem('the_color_save');
+        window.saveData = { unlockedLevel: 1, lastLevel: 1, stars: {} };
+        renderLevelGrid();
+        updateHomeStats();
+        alert('Progress reset to Sector 01.');
+      }
     };
   }
   const tierBtns = document.querySelectorAll('.tier-tab-btn');
@@ -37,20 +154,6 @@ function setupUI() {
       this.classList.add('active');
       currentTierTab = parseInt(this.dataset.tier);
       renderLevelGrid();
-    };
-  }
-  const btnAudio = document.getElementById('btnAudioToggle');
-  const btnMusic = document.getElementById('btnMusicToggle');
-  if (btnAudio) {
-    btnAudio.onclick = function() {
-      let muted = window.colorAudio.toggleMute();
-      btnAudio.innerText = muted ? '🔇' : '🔊';
-    };
-  }
-  if (btnMusic) {
-    btnMusic.onclick = function() {
-      let isMusic = window.colorAudio.toggleMusic();
-      btnMusic.classList.toggle('active', isMusic);
     };
   }
   const colorDots = document.querySelectorAll('.hud-color-dot');
@@ -114,6 +217,69 @@ function setupUI() {
       });
     };
   }
+  updateHomeStats();
+  syncSettingsUI();
+}
+function syncSettingsUI() {
+  const sfxBtn = document.getElementById('btnSettingSfx');
+  const homeSfx = document.getElementById('btnHomeSfxToggle');
+  if (sfxBtn) {
+    sfxBtn.innerText = window.settings.sfx ? 'ON' : 'OFF';
+    sfxBtn.classList.toggle('active', window.settings.sfx);
+  }
+  if (homeSfx) {
+    homeSfx.innerText = window.settings.sfx ? 'SFX: ON' : 'SFX: OFF';
+    homeSfx.classList.toggle('active', window.settings.sfx);
+  }
+  const bgmBtn = document.getElementById('btnSettingBgm');
+  const homeBgm = document.getElementById('btnHomeBgmToggle');
+  if (bgmBtn) {
+    bgmBtn.innerText = window.settings.music ? 'ON' : 'OFF';
+    bgmBtn.classList.toggle('active', window.settings.music);
+  }
+  if (homeBgm) {
+    homeBgm.innerText = window.settings.music ? 'BGM: ON' : 'BGM: OFF';
+    homeBgm.classList.toggle('active', window.settings.music);
+  }
+  const btnGfxHigh = document.getElementById('btnGfxHigh');
+  const btnGfxLow = document.getElementById('btnGfxLow');
+  if (btnGfxHigh && btnGfxLow) {
+    btnGfxHigh.classList.toggle('active', window.settings.graphics === 'high');
+    btnGfxLow.classList.toggle('active', window.settings.graphics === 'low');
+  }
+  const btnPartHigh = document.getElementById('btnPartHigh');
+  const btnPartLow = document.getElementById('btnPartLow');
+  if (btnPartHigh && btnPartLow) {
+    btnPartHigh.classList.toggle('active', window.settings.particles === 'high');
+    btnPartLow.classList.toggle('active', window.settings.particles === 'low');
+  }
+  const btnShake = document.getElementById('btnSettingShake');
+  if (btnShake) {
+    btnShake.innerText = window.settings.shake ? 'ON' : 'OFF';
+    btnShake.classList.toggle('active', window.settings.shake);
+  }
+}
+function saveSettings() {
+  try {
+    localStorage.setItem('the_color_settings', JSON.stringify(window.settings));
+  } catch (e) {}
+}
+function updateHomeStats() {
+  const starsEl = document.getElementById('homeStarsTotal');
+  const sectorEl = document.getElementById('homeCurrentSector');
+  const btnHomePlay = document.getElementById('btnHomePlay');
+  let unlocked = (window.saveData && window.saveData.unlockedLevel) ? window.saveData.unlockedLevel : 1;
+  let totalStars = 0;
+  if (window.saveData && window.saveData.stars) {
+    for (let id in window.saveData.stars) {
+      totalStars += window.saveData.stars[id] || 0;
+    }
+  }
+  if (starsEl) starsEl.innerText = '★ ' + totalStars + '/150';
+  if (sectorEl) sectorEl.innerText = 'SECTOR ' + (unlocked < 10 ? '0' + unlocked : unlocked);
+  if (btnHomePlay) {
+    btnHomePlay.innerText = unlocked > 1 ? ('CONTINUE (SECTOR ' + (unlocked < 10 ? '0' + unlocked : unlocked) + ')') : 'PLAY GAME';
+  }
 }
 function renderLevelGrid() {
   const grid = document.getElementById('levelCardsGrid');
@@ -121,10 +287,11 @@ function renderLevelGrid() {
   grid.innerHTML = '';
   let startIdx = (currentTierTab - 1) * 10 + 1;
   let endIdx = currentTierTab * 10;
+  let maxUnlocked = (window.saveData && window.saveData.unlockedLevel) ? window.saveData.unlockedLevel : 1;
   for (let i = startIdx; i <= endIdx; i++) {
     let lvl = window.levelManager.levels[i - 1];
     if (!lvl) continue;
-    let isUnlocked = i <= (window.saveData ? window.saveData.unlockedLevel : 1);
+    let isUnlocked = i <= maxUnlocked;
     let isCurrent = i === window.currentLevelIndex;
     let stars = (window.saveData && window.saveData.stars) ? (window.saveData.stars[i] || 0) : 0;
     let card = document.createElement('div');
@@ -140,6 +307,10 @@ function renderLevelGrid() {
       card.onclick = function() {
         window.colorAudio.playUiClick();
         document.getElementById('modalLevels').style.display = 'none';
+        document.getElementById('homeScreen').style.display = 'none';
+        document.getElementById('gameHeader').style.display = 'flex';
+        document.getElementById('controlsHintBar').style.display = 'flex';
+        window.inGame = true;
         window.loadLevel(i);
       };
     }
@@ -184,6 +355,7 @@ function showVictoryModal(data) {
     btnNext.style.display = data.nextLevelAvailable ? 'inline-block' : 'none';
   }
   modal.style.display = 'flex';
+  updateHomeStats();
 }
 function showBanner(text, duration) {
   const banner = document.getElementById('globalBanner');
@@ -222,6 +394,10 @@ function joinParty(code) {
     document.getElementById('partyActiveSection').style.display = 'block';
     document.getElementById('partyLobbySection').style.display = 'none';
     document.getElementById('modalParty').style.display = 'none';
+    document.getElementById('homeScreen').style.display = 'none';
+    document.getElementById('gameHeader').style.display = 'flex';
+    document.getElementById('controlsHintBar').style.display = 'flex';
+    window.inGame = true;
     showBanner('JOINED PARTY: ' + upper, 3000);
   });
 }
@@ -231,5 +407,6 @@ window.ui = {
   updateHUD: updateHUD,
   updateTimer: updateTimer,
   showVictoryModal: showVictoryModal,
-  showBanner: showBanner
+  showBanner: showBanner,
+  updateHomeStats: updateHomeStats
 };

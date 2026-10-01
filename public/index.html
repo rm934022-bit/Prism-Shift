@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>THE COLOR</title>
+  <title>PRISM SHIFT</title>
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,9 +11,32 @@
 </head>
 <body>
   <div id="gameContainer">
-    <header id="gameHeader">
+    <div id="homeScreen" class="home-screen-overlay">
+      <div class="home-content">
+        <div class="home-badge">PRECISION PUZZLE PLATFORMER</div>
+        <h1 class="home-title">PRISM SHIFT</h1>
+        <p class="home-tagline">Land only on platforms matching your color. Slow time to switch mid-jump.</p>
+        <div class="home-menu-actions">
+          <button id="btnHomePlay" class="btn-home-primary">PLAY GAME</button>
+          <button id="btnHomeLevels" class="btn-home-secondary">LEVEL SELECT (50)</button>
+          <button id="btnHomeParty" class="btn-home-secondary">MULTIPLAYER RACE</button>
+          <button id="btnHomeSettings" class="btn-home-secondary">SETTINGS</button>
+        </div>
+        <div class="home-footer-toolbar">
+          <div class="home-stats-chip">
+            <span id="homeStarsTotal" class="stars-val">★ 0/150</span>
+            <span id="homeCurrentSector" class="sector-val">SECTOR 01</span>
+          </div>
+          <div class="home-audio-pills">
+            <button id="btnHomeSfxToggle" class="pill-btn active">SFX: ON</button>
+            <button id="btnHomeBgmToggle" class="pill-btn">BGM: OFF</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <header id="gameHeader" style="display: none;">
       <div class="hud-left">
-        <div class="brand-title">THE COLOR</div>
+        <button id="btnBackHome" class="hud-btn-home" title="Return to Home">⌂ HOME</button>
         <div class="level-meta">
           <span id="hudLevelName" class="level-title">01. First Spectrum</span>
           <span id="hudTierName" class="tier-pill">Tier 1: Fundamentals</span>
@@ -32,22 +55,15 @@
           <button class="hud-color-dot" data-color="yellow" style="background: #FFDD00;" title="Yellow (Key 3)"></button>
           <button class="hud-color-dot" data-color="green" style="background: #00F59B;" title="Green (Key 4)"></button>
         </div>
-        <button id="btnOpenLevels" class="btn-icon-text">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          LEVELS (50)
-        </button>
-        <button id="btnOpenParty" class="btn-icon-text">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          PARTY
-        </button>
-        <button id="btnAudioToggle" class="btn-icon" title="Toggle Sound">🔊</button>
-        <button id="btnMusicToggle" class="btn-icon" title="Toggle Ambient Music">🎵</button>
+        <button id="btnOpenLevels" class="btn-icon-text">LEVELS</button>
+        <button id="btnOpenParty" class="btn-icon-text">PARTY</button>
+        <button id="btnOpenSettings" class="btn-icon" title="Settings">⚙</button>
       </div>
     </header>
-    <div id="controlsHintBar">
+    <div id="controlsHintBar" style="display: none;">
       <span><kbd>A</kbd><kbd>D</kbd> Run</span>
       <span><kbd>SPACE</kbd> Jump</span>
-      <span><kbd>SHIFT</kbd> / <kbd>E</kbd> / <kbd>RIGHT CLICK</kbd> Slow Time & Color Wheel</span>
+      <span><kbd>SHIFT</kbd> / <kbd>E</kbd> / <kbd>RIGHT CLICK</kbd> Slow Time</span>
       <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd> Instant Color</span>
       <span><kbd>R</kbd> Restart</span>
       <span class="hint-rule">Rule: Land only on matching colors!</span>
@@ -58,7 +74,7 @@
         <div class="modal-header">
           <div>
             <div class="modal-title">SECTOR ARCHIVES</div>
-            <div class="modal-subtitle">50 Precision Challenges across 5 Difficulty Tiers</div>
+            <div class="modal-subtitle">Clear each sector to unlock the next challenge</div>
           </div>
           <button id="btnCloseLevels" class="btn-close">&times;</button>
         </div>
@@ -70,6 +86,49 @@
           <button class="tier-tab-btn" data-tier="5">TIER 5: CARPETS & GAUNTLET</button>
         </div>
         <div id="levelCardsGrid" class="level-cards-grid"></div>
+      </div>
+    </div>
+    <div id="modalSettings" class="modal-backdrop" style="display: none;">
+      <div class="modal-sheet modal-sm">
+        <div class="modal-header">
+          <div>
+            <div class="modal-title">SETTINGS</div>
+            <div class="modal-subtitle">Audio, graphics and performance options</div>
+          </div>
+          <button id="btnCloseSettings" class="btn-close">&times;</button>
+        </div>
+        <div class="settings-body">
+          <div class="setting-item">
+            <span class="setting-label">SOUND EFFECTS (SFX)</span>
+            <button id="btnSettingSfx" class="btn-toggle active">ON</button>
+          </div>
+          <div class="setting-item">
+            <span class="setting-label">AMBIENT MUSIC (BGM)</span>
+            <button id="btnSettingBgm" class="btn-toggle">OFF</button>
+          </div>
+          <div class="setting-item">
+            <span class="setting-label">GRAPHICS QUALITY</span>
+            <div class="setting-pill-group">
+              <button id="btnGfxHigh" class="pill-opt active">HIGH (BLOOM)</button>
+              <button id="btnGfxLow" class="pill-opt">FAST</button>
+            </div>
+          </div>
+          <div class="setting-item">
+            <span class="setting-label">PARTICLE DENSITY</span>
+            <div class="setting-pill-group">
+              <button id="btnPartHigh" class="pill-opt active">FULL</button>
+              <button id="btnPartLow" class="pill-opt">LOW</button>
+            </div>
+          </div>
+          <div class="setting-item">
+            <span class="setting-label">SCREEN SHAKE</span>
+            <button id="btnSettingShake" class="btn-toggle active">ON</button>
+          </div>
+          <div class="setting-item" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 14px; margin-top: 8px;">
+            <span class="setting-label" style="color: #FF2A6D;">RESET PROGRESS</span>
+            <button id="btnResetSave" class="btn-danger-sm">RESET DATA</button>
+          </div>
+        </div>
       </div>
     </div>
     <div id="modalParty" class="modal-backdrop" style="display: none;">

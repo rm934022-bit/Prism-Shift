@@ -10,6 +10,7 @@ function updateCamera(targetX, targetY, dt, canvasWidth, canvasHeight) {
   camera.y = Math.max(-100, Math.min(900 - canvasHeight, camera.y));
 }
 function addColorBurst(x, y, color) {
+  if (window.settings && window.settings.particles === 'low') return;
   for (let i = 0; i < 16; i++) {
     let angle = Math.random() * Math.PI * 2;
     let speed = 60 + Math.random() * 160;
@@ -26,7 +27,8 @@ function addColorBurst(x, y, color) {
   }
 }
 function addDeathBurst(x, y, color) {
-  for (let i = 0; i < 30; i++) {
+  let count = (window.settings && window.settings.particles === 'low') ? 10 : 30;
+  for (let i = 0; i < count; i++) {
     let angle = Math.random() * Math.PI * 2;
     let speed = 50 + Math.random() * 240;
     particles.push({
@@ -56,6 +58,7 @@ function updateParticles(dt, isSlowMo) {
   }
 }
 function renderScene(ctx, canvas, playerObj, level, isSlowMo, wheelAngle, opponents, dt) {
+  let isHighGfx = !window.settings || window.settings.graphics !== 'low';
   updateParticles(dt, isSlowMo);
   updateCamera(playerObj.x, playerObj.y, dt, canvas.width, canvas.height);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -103,8 +106,10 @@ function renderScene(ctx, canvas, playerObj, level, isSlowMo, wheelAngle, oppone
       ctx.save();
       if (isMatch) {
         ctx.fillStyle = hex;
-        ctx.shadowColor = hex;
-        ctx.shadowBlur = 12;
+        if (isHighGfx) {
+          ctx.shadowColor = hex;
+          ctx.shadowBlur = 12;
+        }
         ctx.beginPath();
         ctx.roundRect(px, py, plat.w, plat.h, 6);
         ctx.fill();
@@ -146,7 +151,7 @@ function renderScene(ctx, canvas, playerObj, level, isSlowMo, wheelAngle, oppone
       ctx.save();
       ctx.fillStyle = hex;
       ctx.globalAlpha = isSafe ? 0.3 : 1.0;
-      if (!isSafe) {
+      if (!isSafe && isHighGfx) {
         ctx.shadowColor = hex;
         ctx.shadowBlur = 10;
       }
@@ -168,8 +173,10 @@ function renderScene(ctx, canvas, playerObj, level, isSlowMo, wheelAngle, oppone
       let pad = level.bouncePads[i];
       ctx.save();
       ctx.fillStyle = '#fff';
-      ctx.shadowColor = '#00F59B';
-      ctx.shadowBlur = 10;
+      if (isHighGfx) {
+        ctx.shadowColor = '#00F59B';
+        ctx.shadowBlur = 10;
+      }
       ctx.beginPath();
       ctx.roundRect(pad.x, pad.y, pad.w, pad.h, 4);
       ctx.fill();
@@ -192,8 +199,10 @@ function renderScene(ctx, canvas, playerObj, level, isSlowMo, wheelAngle, oppone
       ctx.save();
       ctx.rotate(time * (r % 2 === 0 ? 1 : -1) * (1 + r * 0.2));
       ctx.strokeStyle = COLOR_HEX[rings[r]];
-      ctx.shadowColor = COLOR_HEX[rings[r]];
-      ctx.shadowBlur = 14;
+      if (isHighGfx) {
+        ctx.shadowColor = COLOR_HEX[rings[r]];
+        ctx.shadowBlur = 14;
+      }
       ctx.lineWidth = 2.5;
       let sz = 18 + r * 8;
       ctx.beginPath();
@@ -206,8 +215,10 @@ function renderScene(ctx, canvas, playerObj, level, isSlowMo, wheelAngle, oppone
       ctx.restore();
     }
     ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = '#ffffff';
-    ctx.shadowBlur = 16;
+    if (isHighGfx) {
+      ctx.shadowColor = '#ffffff';
+      ctx.shadowBlur = 16;
+    }
     ctx.beginPath();
     ctx.arc(0, 0, 7, 0, Math.PI * 2);
     ctx.fill();
@@ -220,8 +231,10 @@ function renderScene(ctx, canvas, playerObj, level, isSlowMo, wheelAngle, oppone
     ctx.translate(opp.x, opp.y);
     ctx.globalAlpha = 0.65;
     ctx.fillStyle = oppHex;
-    ctx.shadowColor = oppHex;
-    ctx.shadowBlur = 8;
+    if (isHighGfx) {
+      ctx.shadowColor = oppHex;
+      ctx.shadowBlur = 8;
+    }
     ctx.beginPath();
     ctx.roundRect(-12, -16, 24, 32, 6);
     ctx.fill();
@@ -233,7 +246,8 @@ function renderScene(ctx, canvas, playerObj, level, isSlowMo, wheelAngle, oppone
   }
   if (!playerObj.isDead) {
     let hex = COLOR_HEX[playerObj.color] || '#FF2A6D';
-    for (let i = 0; i < playerObj.trail.length; i++) {
+    let trailCount = isHighGfx ? playerObj.trail.length : Math.min(2, playerObj.trail.length);
+    for (let i = 0; i < trailCount; i++) {
       let t = playerObj.trail[i];
       ctx.save();
       ctx.globalAlpha = t.alpha * 0.4;
@@ -247,8 +261,10 @@ function renderScene(ctx, canvas, playerObj, level, isSlowMo, wheelAngle, oppone
     ctx.translate(playerObj.x, playerObj.y);
     ctx.scale(playerObj.scaleX * playerObj.facing, playerObj.scaleY);
     ctx.fillStyle = hex;
-    ctx.shadowColor = hex;
-    ctx.shadowBlur = 18;
+    if (isHighGfx) {
+      ctx.shadowColor = hex;
+      ctx.shadowBlur = 18;
+    }
     ctx.beginPath();
     ctx.roundRect(-playerObj.width / 2, -playerObj.height / 2, playerObj.width, playerObj.height, 7);
     ctx.fill();
@@ -268,8 +284,10 @@ function renderScene(ctx, canvas, playerObj, level, isSlowMo, wheelAngle, oppone
     ctx.save();
     ctx.globalAlpha = p.alpha;
     ctx.fillStyle = p.color;
-    ctx.shadowColor = p.color;
-    ctx.shadowBlur = 6;
+    if (isHighGfx) {
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 6;
+    }
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
     ctx.fill();
@@ -315,7 +333,7 @@ function renderScene(ctx, canvas, playerObj, level, isSlowMo, wheelAngle, oppone
         ctx.closePath();
         ctx.fillStyle = qHex;
         ctx.globalAlpha = isHover ? 0.95 : 0.45;
-        if (isHover) {
+        if (isHover && isHighGfx) {
           ctx.shadowColor = qHex;
           ctx.shadowBlur = 20;
         }

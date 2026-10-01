@@ -11,11 +11,19 @@ let selectedWheelColor = 'red';
 let gameMode = 'solo';
 let socket = null;
 let roomCode = null;
+let inGame = false;
 const opponents = {};
 let saveData = {
   unlockedLevel: 1,
   lastLevel: 1,
   stars: {}
+};
+let settings = {
+  graphics: 'high',
+  particles: 'high',
+  shake: true,
+  sfx: true,
+  music: false
 };
 const keys = {
   left: false,
@@ -31,6 +39,13 @@ function loadSave() {
     }
   } catch (e) {}
   window.saveData = saveData;
+  try {
+    let setRaw = localStorage.getItem('the_color_settings');
+    if (setRaw) {
+      settings = Object.assign(settings, JSON.parse(setRaw));
+    }
+  } catch (e) {}
+  window.settings = settings;
 }
 function writeSave() {
   try {
@@ -54,6 +69,7 @@ function loadLevel(id) {
   deaths = 0;
   window.resetPlayer(currentLevel.spawn);
   window.ui.updateHUD(currentLevel, levelTime, deaths);
+  window.ui.updateHomeStats();
 }
 function restartLevel() {
   deaths++;
@@ -103,6 +119,7 @@ function onLevelCompleted() {
 function setupInputs() {
   window.addEventListener('keydown', function(e) {
     if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+    if (!window.inGame) return;
     window.colorAudio.init();
     if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.left = true;
     if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.right = true;
@@ -124,6 +141,7 @@ function setupInputs() {
     }
   });
   window.addEventListener('keyup', function(e) {
+    if (!window.inGame) return;
     if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.left = false;
     if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.right = false;
     if (e.code === 'Space' || e.code === 'KeyW' || e.code === 'ArrowUp') {
@@ -135,6 +153,7 @@ function setupInputs() {
     }
   });
   canvas.addEventListener('mousedown', function(e) {
+    if (!window.inGame) return;
     window.colorAudio.init();
     if (e.button === 2) {
       setSlowMotionState(true);
@@ -146,12 +165,14 @@ function setupInputs() {
     }
   });
   canvas.addEventListener('mouseup', function(e) {
+    if (!window.inGame) return;
     if (e.button === 2) {
       commitWheelColor();
       setSlowMotionState(false);
     }
   });
   canvas.addEventListener('mousemove', function(e) {
+    if (!window.inGame) return;
     if (isSlowMo) {
       let rect = canvas.getBoundingClientRect();
       let mx = (e.clientX - rect.left) * (canvas.width / rect.width);
@@ -173,14 +194,16 @@ function setupTouch() {
   const btnJump = document.getElementById('touchJump');
   const btnWheel = document.getElementById('touchWheel');
   if (!btnLeft || !btnJump) return;
-  btnLeft.ontouchstart = function(e) { e.preventDefault(); keys.left = true; };
+  btnLeft.ontouchstart = function(e) { e.preventDefault(); if (window.inGame) keys.left = true; };
   btnLeft.ontouchend = function(e) { e.preventDefault(); keys.left = false; };
-  btnRight.ontouchstart = function(e) { e.preventDefault(); keys.right = true; };
+  btnRight.ontouchstart = function(e) { e.preventDefault(); if (window.inGame) keys.right = true; };
   btnRight.ontouchend = function(e) { e.preventDefault(); keys.right = false; };
   btnJump.ontouchstart = function(e) {
     e.preventDefault();
-    keys.jumpPressed = true;
-    keys.jumpHold = true;
+    if (window.inGame) {
+      keys.jumpPressed = true;
+      keys.jumpHold = true;
+    }
   };
   btnJump.ontouchend = function(e) {
     e.preventDefault();
@@ -188,10 +211,11 @@ function setupTouch() {
   };
   btnWheel.ontouchstart = function(e) {
     e.preventDefault();
-    setSlowMotionState(true);
+    if (window.inGame) setSlowMotionState(true);
   };
   btnWheel.ontouchmove = function(e) {
     e.preventDefault();
+    if (!window.inGame) return;
     let touch = e.touches[0];
     let rect = btnWheel.getBoundingClientRect();
     let cx = rect.left + rect.width / 2;
@@ -201,6 +225,7 @@ function setupTouch() {
   };
   btnWheel.ontouchend = function(e) {
     e.preventDefault();
+    if (!window.inGame) return;
     commitWheelColor();
     setSlowMotionState(false);
   };
@@ -247,6 +272,7 @@ function setupSocket() {
 function startGame() {
   canvas = document.getElementById('gameCanvas');
   ctx = canvas.getContext('2d');
+  window.inGame = false;
   loadSave();
   setupSocket();
   setupInputs();
@@ -256,12 +282,15 @@ function startGame() {
   function gameLoop(timestamp) {
     let dt = Math.min((timestamp - lastTime) / 1000, 0.1);
     lastTime = timestamp;
-    if (!window.player.isDead) {
-      levelTime += dt * timeScale;
+    if (window.inGame) {
+      if (!window.player.isDead) {
+        levelTime += dt * timeScale;
+      }
+      window.updatePlayer(dt, keys, currentLevel, timeScale);
+      keys.jumpPressed = false;
+      checkGoal();
+      window.ui.updateTimer(levelTime, currentLevel.timeLimit);
     }
-    window.updatePlayer(dt, keys, currentLevel, timeScale);
-    keys.jumpPressed = false;
-    checkGoal();
     let oppList = [];
     for (let id in opponents) {
       oppList.push(opponents[id]);
@@ -276,8 +305,7 @@ function startGame() {
       oppList,
       dt
     );
-    window.ui.updateTimer(levelTime, currentLevel.timeLimit);
-    if (gameMode === 'party' && socket && roomCode) {
+    if (window.inGame && gameMode === 'party' && socket && roomCode) {
       socket.emit('playerMove', {
         room: roomCode,
         x: Math.round(window.player.x),
