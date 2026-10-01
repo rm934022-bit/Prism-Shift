@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>THE COLOR // Precision 2D Platformer</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="gameContainer">
+    <!-- Top Sleek Minimalist HUD -->
+    <header id="gameHeader">
+      <div class="hud-left">
+        <div class="brand-title">THE COLOR</div>
+        <div class="level-meta">
+          <span id="hudLevelName" class="level-title">01. First Spectrum</span>
+          <span id="hudTierName" class="tier-pill">Tier 1: Fundamentals</span>
+        </div>
+      </div>
+
+      <div class="hud-center">
+        <div class="timer-box">
+          <span class="timer-icon">⏱</span>
+          <span id="hudTimer" class="timer-val">25.0s</span>
+        </div>
+      </div>
+
+      <div class="hud-right">
+        <!-- Direct Color Switch Pills -->
+        <div class="color-palette-bar">
+          <button class="hud-color-dot" data-color="red" style="background: #FF2A6D;" title="Red (Key 1)"></button>
+          <button class="hud-color-dot" data-color="blue" style="background: #05D9E8;" title="Blue (Key 2)"></button>
+          <button class="hud-color-dot" data-color="yellow" style="background: #FFDD00;" title="Yellow (Key 3)"></button>
+          <button class="hud-color-dot" data-color="green" style="background: #00F59B;" title="Green (Key 4)"></button>
+        </div>
+
+        <button id="btnOpenLevels" class="btn-icon-text">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          LEVELS (50)
+        </button>
+
+        <button id="btnOpenParty" class="btn-icon-text">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          PARTY
+        </button>
+
+        <button id="btnAudioToggle" class="btn-icon" title="Toggle Sound">🔊</button>
+        <button id="btnMusicToggle" class="btn-icon" title="Toggle Ambient Music">🎵</button>
+      </div>
+    </header>
+
+    <!-- Bottom Controls Hint Bar -->
+    <div id="controlsHintBar">
+      <span><kbd>A</kbd><kbd>D</kbd> Run</span>
+      <span><kbd>SPACE</kbd> Jump</span>
+      <span><kbd>SHIFT</kbd> / <kbd>E</kbd> / <kbd>RIGHT CLICK</kbd> Slow Time & Color Wheel</span>
+      <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd> Instant Color</span>
+      <span><kbd>R</kbd> Restart</span>
+      <span class="hint-rule">Rule: Land only on matching colors!</span>
+    </div>
+
+    <!-- Announcement Banner -->
+    <div id="globalBanner" class="global-banner"></div>
+
+    <!-- 50-Level Selection Modal -->
+    <div id="modalLevels" class="modal-backdrop" style="display: none;">
+      <div class="modal-sheet">
+        <div class="modal-header">
+          <div>
+            <div class="modal-title">SECTOR ARCHIVES</div>
+            <div class="modal-subtitle">50 Precision Challenges across 5 Difficulty Tiers</div>
+          </div>
+          <button id="btnCloseLevels" class="btn-close">&times;</button>
+        </div>
+
+        <div class="tier-tabs-bar">
+          <button class="tier-tab-btn active" data-tier="1">TIER 1: FUNDAMENTALS</button>
+          <button class="tier-tab-btn" data-tier="2">TIER 2: KINETIC</button>
+          <button class="tier-tab-btn" data-tier="3">TIER 3: CHROMA SHIFT</button>
+          <button class="tier-tab-btn" data-tier="4">TIER 4: THE TOWERS</button>
+          <button class="tier-tab-btn" data-tier="5">TIER 5: CARPETS & GAUNTLET</button>
+        </div>
+
+        <div id="levelCardsGrid" class="level-cards-grid"></div>
+      </div>
+    </div>
+
+    <!-- Multiplayer Party Modal -->
+    <div id="modalParty" class="modal-backdrop" style="display: none;">
+      <div class="modal-sheet modal-sm">
+        <div class="modal-header">
+          <div>
+            <div class="modal-title">MULTIPLAYER RACE</div>
+            <div class="modal-subtitle">Race your friend through any level in real-time!</div>
+          </div>
+          <button id="btnCloseParty" class="btn-close">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <div id="partyLobbySection">
+            <div class="party-action-box">
+              <button id="btnCreateParty" class="btn-primary">CREATE NEW PARTY</button>
+            </div>
+            <div class="party-divider"><span>OR JOIN WITH CODE</span></div>
+            <div class="join-party-row">
+              <input type="text" id="inputPartyCode" maxlength="4" placeholder="CODE" class="party-code-input">
+              <button id="btnJoinParty" class="btn-secondary">JOIN</button>
+            </div>
+          </div>
+
+          <div id="partyActiveSection" style="display: none;">
+            <div class="active-party-card">
+              <span class="active-code-label">PARTY CODE</span>
+              <span id="partyCodeDisplay" class="active-code-val">----</span>
+              <button id="btnCopyPartyLink" class="btn-secondary btn-sm">COPY LINK</button>
+            </div>
+            <p class="party-instruction">Share this code with your friend. Both of you will see each other race in real-time as ghost runners!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Victory / Level Complete Modal -->
+    <div id="modalVictory" class="modal-backdrop" style="display: none;">
+      <div class="modal-sheet modal-sm victory-sheet">
+        <div class="victory-header">PRISM REACHED</div>
+        <div id="vicLevelName" class="victory-level-name">Sector 01: First Spectrum</div>
+
+        <div id="vicStars" class="victory-stars-row">
+          <span class="vic-star earned">★</span>
+          <span class="vic-star earned">★</span>
+          <span class="vic-star earned">★</span>
+        </div>
+
+        <div class="victory-stats">
+          <div class="stat-pill">
+            <span class="stat-lbl">CLEAR TIME</span>
+            <span id="vicTime" class="stat-val">12.4s</span>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-lbl">DEATHS</span>
+            <span id="vicDeaths" class="stat-val">0 (Flawless)</span>
+          </div>
+        </div>
+
+        <div class="victory-actions">
+          <button id="btnNextLevel" class="btn-primary">NEXT LEVEL</button>
+          <button id="btnRetry" class="btn-secondary">RETRY</button>
+          <button id="btnLevelSelectFromVic" class="btn-secondary">LEVEL SELECT</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Touch Controls -->
+    <div id="mobileTouchControls">
+      <div class="touch-group-left">
+        <button id="touchLeft" class="touch-btn">◀</button>
+        <button id="touchRight" class="touch-btn">▶</button>
+      </div>
+      <div class="touch-group-right">
+        <button id="touchWheel" class="touch-btn wheel-btn">🎨 SLOW-MO</button>
+        <button id="touchJump" class="touch-btn jump-btn">JUMP</button>
+      </div>
+    </div>
+
+    <!-- 2D Canvas -->
+    <canvas id="gameCanvas" width="1280" height="720"></canvas>
+  </div>
+
+  <!-- Socket.IO library from server -->
+  <script src="/socket.io/socket.io.js"></script>
+
+  <!-- Game Scripts -->
+  <script src="js/audio.js"></script>
+  <script src="js/levels.js"></script>
+  <script src="js/physics.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/game.js"></script>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      window.gameInstance = new GameApp();
+      window.uiManager.setGame(window.gameInstance);
+    });
+  </script>
+</body>
+</html>
