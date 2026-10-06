@@ -1,10 +1,10 @@
-const COLOR_NAMES = ['red', 'blue', 'yellow', 'green'];
+const COLOR_NAMES = ["red", "blue", "yellow", "green"];
 const COLOR_HEX = {
-  red: '#FF2A6D',
-  blue: '#05D9E8',
-  yellow: '#FFDD00',
-  green: '#00F59B',
-  white: '#F0F4F8'
+  red: "#FF2A6D",
+  blue: "#05D9E8",
+  yellow: "#FFDD00",
+  green: "#00F59B",
+  white: "#F0F4F8"
 };
 const tierNames = [
   "Tier 1: Fundamentals",
@@ -77,210 +77,230 @@ function makeLevels() {
       name: title,
       timeLimit: 25 + tier * 5,
       targetTime: 12 + tier * 3,
-      spawn: { x: 80, y: 520, color: 'red' },
-      portal: { x: 1080, y: 220 },
+      spawn: { x: 70, y: 500, color: "red" },
+      portal: { x: 1080, y: 440 },
       platforms: [],
       hazards: [],
       bouncePads: []
     };
     if (id === 1) {
-      lvl.spawn = { x: 80, y: 500, color: 'red' };
-      lvl.portal = { x: 1050, y: 460 };
+      lvl.spawn = { x: 70, y: 500, color: "red" };
+      lvl.portal = { x: 1040, y: 450 };
       lvl.platforms = [
-        { x: 40, y: 560, w: 200, h: 30, color: 'white' },
-        { x: 300, y: 520, w: 160, h: 25, color: 'red' },
-        { x: 540, y: 480, w: 160, h: 25, color: 'blue' },
-        { x: 780, y: 480, w: 160, h: 25, color: 'red' },
-        { x: 990, y: 520, w: 180, h: 30, color: 'white' }
+        { x: 30, y: 560, w: 130, h: 25, color: "white" },
+        { x: 220, y: 510, w: 90, h: 22, color: "red" },
+        { x: 390, y: 460, w: 90, h: 22, color: "blue" },
+        { x: 560, y: 460, w: 90, h: 22, color: "red" },
+        { x: 730, y: 490, w: 90, h: 22, color: "blue" },
+        { x: 910, y: 510, w: 140, h: 28, color: "white" }
       ];
     } else if (id === 2) {
-      lvl.spawn = { x: 80, y: 520, color: 'red' };
-      lvl.portal = { x: 1060, y: 380 };
+      lvl.spawn = { x: 70, y: 520, color: "red" };
+      lvl.portal = { x: 1050, y: 440 };
       lvl.platforms = [
-        { x: 40, y: 580, w: 180, h: 30, color: 'white' },
-        { x: 280, y: 520, w: 140, h: 25, color: 'red' },
-        { x: 480, y: 460, w: 140, h: 25, color: 'blue' },
-        { x: 680, y: 400, w: 140, h: 25, color: 'yellow' },
-        { x: 880, y: 400, w: 140, h: 25, color: 'blue' },
-        { x: 1020, y: 440, w: 160, h: 30, color: 'white' }
+        { x: 30, y: 580, w: 120, h: 25, color: "white" },
+        { x: 210, y: 520, w: 85, h: 22, color: "red" },
+        { x: 380, y: 465, w: 80, h: 22, color: "blue" },
+        { x: 550, y: 410, w: 80, h: 22, color: "yellow" },
+        { x: 720, y: 450, w: 80, h: 22, color: "blue" },
+        { x: 880, y: 490, w: 80, h: 22, color: "red" },
+        { x: 1020, y: 500, w: 130, h: 28, color: "white" }
       ];
     } else if (id === 3) {
-      lvl.spawn = { x: 80, y: 540, color: 'red' };
-      lvl.portal = { x: 1060, y: 300 };
+      lvl.spawn = { x: 70, y: 540, color: "red" };
+      lvl.portal = { x: 1040, y: 430 };
       lvl.platforms = [
-        { x: 40, y: 600, w: 160, h: 30, color: 'white' },
-        { x: 260, y: 540, w: 130, h: 24, color: 'red' },
-        { x: 450, y: 480, w: 130, h: 24, color: 'blue' },
-        { x: 640, y: 420, w: 130, h: 24, color: 'yellow' },
-        { x: 830, y: 360, w: 130, h: 24, color: 'green' },
-        { x: 1010, y: 360, w: 160, h: 30, color: 'white' }
+        { x: 30, y: 600, w: 120, h: 25, color: "white" },
+        { x: 205, y: 540, w: 80, h: 22, color: "red" },
+        { x: 365, y: 480, w: 75, h: 22, color: "blue" },
+        { x: 525, y: 420, w: 75, h: 22, color: "yellow" },
+        { x: 690, y: 440, w: 75, h: 22, color: "green" },
+        { x: 855, y: 480, w: 75, h: 22, color: "yellow" },
+        { x: 1000, y: 490, w: 130, h: 28, color: "white" }
       ];
     } else if (id === 4) {
-      lvl.spawn = { x: 80, y: 480, color: 'red' };
-      lvl.portal = { x: 1060, y: 440 };
+      lvl.spawn = { x: 70, y: 500, color: "red" };
+      lvl.portal = { x: 1040, y: 420 };
       lvl.platforms = [
-        { x: 40, y: 540, w: 160, h: 30, color: 'white' },
-        { x: 260, y: 380, w: 140, h: 24, color: 'red' },
-        { x: 470, y: 340, w: 140, h: 24, color: 'red' },
-        { x: 260, y: 520, w: 140, h: 24, color: 'blue' },
-        { x: 470, y: 520, w: 140, h: 24, color: 'blue' },
-        { x: 690, y: 440, w: 150, h: 24, color: 'yellow' },
-        { x: 900, y: 460, w: 150, h: 24, color: 'green' },
-        { x: 1010, y: 500, w: 160, h: 30, color: 'white' }
+        { x: 30, y: 560, w: 120, h: 25, color: "white" },
+        { x: 210, y: 500, w: 75, h: 22, color: "red" },
+        { x: 370, y: 450, w: 75, h: 22, color: "red" },
+        { x: 210, y: 560, w: 75, h: 22, color: "blue" },
+        { x: 370, y: 520, w: 75, h: 22, color: "blue" },
+        { x: 530, y: 460, w: 80, h: 22, color: "yellow" },
+        { x: 700, y: 420, w: 75, h: 22, color: "green" },
+        { x: 860, y: 450, w: 75, h: 22, color: "blue" },
+        { x: 1000, y: 460, w: 130, h: 28, color: "white" }
       ];
     } else if (id === 5) {
-      lvl.spawn = { x: 100, y: 220, color: 'red' };
-      lvl.portal = { x: 1060, y: 540 };
+      lvl.spawn = { x: 80, y: 260, color: "red" };
+      lvl.portal = { x: 1030, y: 420 };
       lvl.platforms = [
-        { x: 50, y: 280, w: 160, h: 30, color: 'white' },
-        { x: 280, y: 340, w: 120, h: 24, color: 'red' },
-        { x: 460, y: 420, w: 120, h: 24, color: 'blue' },
-        { x: 640, y: 500, w: 120, h: 24, color: 'yellow' },
-        { x: 820, y: 560, w: 130, h: 24, color: 'green' },
-        { x: 1000, y: 600, w: 170, h: 30, color: 'white' }
+        { x: 30, y: 320, w: 120, h: 25, color: "white" },
+        { x: 200, y: 380, w: 75, h: 22, color: "red" },
+        { x: 360, y: 440, w: 75, h: 22, color: "blue" },
+        { x: 520, y: 490, w: 75, h: 22, color: "yellow" },
+        { x: 680, y: 450, w: 75, h: 22, color: "green" },
+        { x: 840, y: 480, w: 75, h: 22, color: "red" },
+        { x: 1000, y: 480, w: 130, h: 28, color: "white" }
+      ];
+    } else if (id === 6) {
+      lvl.spawn = { x: 70, y: 500, color: "red" };
+      lvl.portal = { x: 1090, y: 430 };
+      lvl.platforms = [
+        { x: 30, y: 560, w: 120, h: 25, color: "white" },
+        { x: 195, y: 505, w: 75, h: 22, color: "red" },
+        { x: 345, y: 445, w: 75, h: 22, color: "blue" },
+        { x: 500, y: 390, w: 80, h: 22, color: "yellow" },
+        { x: 660, y: 405, w: 75, h: 22, color: "green" },
+        { x: 810, y: 450, w: 75, h: 22, color: "red" },
+        { x: 955, y: 490, w: 75, h: 22, color: "blue" },
+        { x: 1060, y: 490, w: 130, h: 28, color: "white" }
       ];
     } else if (tier === 1) {
-      lvl.spawn = { x: 70, y: 500, color: 'red' };
-      lvl.portal = { x: 1060, y: 320 };
-      lvl.platforms.push({ x: 30, y: 560, w: 140, h: 30, color: 'white' });
-      let stepCount = 5 + (id - 5);
+      lvl.spawn = { x: 70, y: 500, color: "red" };
+      lvl.portal = { x: 1060, y: 430 };
+      lvl.platforms.push({ x: 30, y: 560, w: 110, h: 25, color: "white" });
+      let stepCount = 6 + (id - 6);
       let spacing = 780 / stepCount;
+      let width = 74 - (id - 6) * 3;
       for (let i = 0; i < stepCount; i++) {
         let col = COLOR_NAMES[i % 4];
-        let y = 520 - Math.sin((i / stepCount) * Math.PI) * 200 + (i % 2 === 0 ? -20 : 20);
+        let y = 505 - Math.sin((i / (stepCount - 1)) * Math.PI) * 115;
         lvl.platforms.push({
-          x: 220 + i * spacing,
-          y: Math.max(180, Math.min(600, y)),
-          w: 100 - (id - 5) * 4,
+          x: 180 + i * spacing,
+          y: Math.round(y),
+          w: width,
           h: 22,
           color: col
         });
       }
-      lvl.platforms.push({ x: 1010, y: 380, w: 160, h: 30, color: 'white' });
+      lvl.platforms.push({ x: 1010, y: 490, w: 130, h: 28, color: "white" });
     } else if (tier === 2) {
-      lvl.spawn = { x: 70, y: 480, color: 'blue' };
-      lvl.portal = { x: 1060, y: 440 };
-      lvl.platforms.push({ x: 30, y: 540, w: 140, h: 30, color: 'white' });
-      let moveCount = 4 + (id - 10) % 4;
+      lvl.spawn = { x: 70, y: 460, color: "blue" };
+      lvl.portal = { x: 1060, y: 360 };
+      lvl.platforms.push({ x: 30, y: 520, w: 110, h: 25, color: "white" });
+      let moveCount = 5 + (id - 10) % 3;
+      let spacing = 760 / moveCount;
       for (let i = 0; i < moveCount; i++) {
         let col = COLOR_NAMES[(i + 1) % 4];
         let isVert = i % 2 === 1;
         lvl.platforms.push({
-          x: 240 + i * 180,
-          y: 420 + (i % 2 === 0 ? -40 : 40),
-          w: 120,
-          h: 24,
+          x: 180 + i * spacing,
+          y: 460 - (i % 2 === 0 ? 0 : 40),
+          w: 75,
+          h: 22,
           color: col,
           move: {
-            dx: isVert ? 0 : 70 + (id - 10) * 8,
-            dy: isVert ? 80 + (id - 10) * 8 : 0,
-            speed: 1.2 + (id - 10) * 0.1,
-            phase: i * 1.1
+            dx: isVert ? 0 : 36 + (id - 10) * 3,
+            dy: isVert ? 36 + (id - 10) * 3 : 0,
+            speed: 1.4 + (id - 10) * 0.07,
+            phase: i * 1.3
           }
         });
       }
-      lvl.hazards.push({ x: 200, y: 650, w: 800, h: 30, color: 'all' });
-      lvl.platforms.push({ x: 1000, y: 500, w: 160, h: 30, color: 'white' });
+      lvl.platforms.push({ x: 990, y: 420, w: 130, h: 28, color: "white" });
     } else if (tier === 3) {
-      lvl.spawn = { x: 80, y: 500, color: 'yellow' };
-      lvl.portal = { x: 1050, y: 280 };
-      lvl.platforms.push({ x: 30, y: 560, w: 150, h: 30, color: 'white' });
-      let count = 5 + (id - 20) % 3;
+      lvl.spawn = { x: 70, y: 500, color: "yellow" };
+      lvl.portal = { x: 1060, y: 320 };
+      lvl.platforms.push({ x: 30, y: 560, w: 110, h: 25, color: "white" });
+      let count = 6 + (id - 20) % 3;
+      let spacing = 760 / count;
       for (let i = 0; i < count; i++) {
         let p = {
-          x: 230 + i * 150,
-          y: 480 - i * 35,
-          w: 110,
+          x: 180 + i * spacing,
+          y: 490 - i * 30,
+          w: 72,
           h: 22,
-          color: COLOR_NAMES[i % 4]
+          color: COLOR_NAMES[i % 4],
+          colorCycle: ["red", "blue", "yellow", "green"],
+          cycleInterval: Math.max(1.4, 2.0 - ((id - 20) * 0.06)),
+          cyclePhase: i * 0.7
         };
-        if (i % 2 === 0) {
-          p.colorCycle = ['red', 'blue', 'yellow', 'green'];
-          p.cycleInterval = 2.4 - ((id - 20) * 0.08);
-          p.cyclePhase = i * 0.6;
-        }
         lvl.platforms.push(p);
       }
       if (id >= 25) {
-        lvl.bouncePads.push({ x: 540, y: 460, w: 40, h: 14, force: 720 });
+        lvl.bouncePads.push({ x: 500, y: 430, w: 35, h: 14, force: 720 });
       }
-      lvl.platforms.push({ x: 990, y: 340, w: 170, h: 30, color: 'white' });
+      lvl.platforms.push({ x: 990, y: 370, w: 130, h: 28, color: "white" });
     } else if (tier === 4) {
-      lvl.spawn = { x: 100, y: 640, color: 'green' };
-      lvl.portal = { x: 600, y: 120 };
-      lvl.platforms.push({ x: 40, y: 700, w: 200, h: 30, color: 'white' });
+      lvl.spawn = { x: 80, y: 640, color: "green" };
+      lvl.portal = { x: 520, y: 130 };
+      lvl.platforms.push({ x: 30, y: 700, w: 140, h: 25, color: "white" });
       for (let f = 0; f < 8; f++) {
         let isLeft = f % 2 === 0;
         lvl.platforms.push({
-          x: isLeft ? 380 : 660,
-          y: 620 - f * 65,
-          w: 120,
+          x: isLeft ? 430 : 610,
+          y: 640 - f * 52,
+          w: 80,
           h: 20,
           color: COLOR_NAMES[f % 4]
         });
-        if (f === 3 || f === 6) {
+        if (f === 2 || f === 5) {
           lvl.platforms.push({
             x: 520,
-            y: 620 - f * 65,
-            w: 90,
+            y: 640 - f * 52,
+            w: 60,
             h: 18,
             color: COLOR_NAMES[(f + 2) % 4],
-            move: { dx: 0, dy: 50, speed: 1.5, phase: f }
+            move: { dx: 0, dy: 30, speed: 1.8, phase: f }
           });
         }
       }
-      lvl.bouncePads.push({ x: 180, y: 690, w: 40, h: 12, force: 680 });
+      lvl.bouncePads.push({ x: 200, y: 690, w: 35, h: 12, force: 660 });
       if (id >= 35) {
-        lvl.bouncePads.push({ x: 420, y: 320, w: 40, h: 12, force: 740 });
+        lvl.bouncePads.push({ x: 440, y: 350, w: 35, h: 12, force: 720 });
       }
-      lvl.platforms.push({ x: 520, y: 180, w: 180, h: 25, color: 'white' });
+      lvl.platforms.push({ x: 450, y: 190, w: 140, h: 25, color: "white" });
     } else {
-      lvl.spawn = { x: 60, y: 480, color: 'red' };
+      lvl.spawn = { x: 60, y: 460, color: "red" };
       lvl.portal = { x: 1080, y: 300 };
-      lvl.platforms.push({ x: 20, y: 540, w: 120, h: 30, color: 'white' });
+      lvl.platforms.push({ x: 20, y: 520, w: 110, h: 25, color: "white" });
       let segCount = 6 + (id - 40);
       for (let s = 0; s < segCount; s++) {
         lvl.platforms.push({
-          x: 160 + s * 80,
-          y: 520 + Math.sin(s * 0.8) * 40,
-          w: 74,
+          x: 160 + s * 74,
+          y: 500 - s * 10,
+          w: 55,
           h: 20,
           color: COLOR_NAMES[s % 4],
           isCarpet: true
         });
       }
-      let midX = 160 + segCount * 80;
+      let midX = 160 + segCount * 74;
       lvl.platforms.push({
-        x: midX + 60,
-        y: 380,
-        w: 100,
+        x: midX + 30,
+        y: 430,
+        w: 70,
         h: 22,
-        color: 'yellow',
-        move: { dx: 60, dy: 60, speed: 1.8, phase: 0 }
+        color: "yellow",
+        move: { dx: 40, dy: 30, speed: 2.0, phase: 0 }
       });
       lvl.platforms.push({
-        x: midX + 220,
-        y: 340,
-        w: 100,
+        x: midX + 160,
+        y: 380,
+        w: 70,
         h: 22,
-        color: 'green',
-        colorCycle: ['red', 'blue', 'yellow', 'green'],
-        cycleInterval: 1.5,
+        color: "green",
+        colorCycle: ["red", "blue", "yellow", "green"],
+        cycleInterval: 1.4,
         cyclePhase: 1
       });
       if (id === 50) {
         lvl.name = "Sector 50: The Master Prism Gauntlet";
         lvl.timeLimit = 50;
         lvl.targetTime = 22;
-        lvl.bouncePads.push({ x: 100, y: 530, w: 40, h: 12, force: 800 });
-        lvl.hazards.push({ x: 150, y: 680, w: 900, h: 40, color: 'all' });
+        lvl.bouncePads.push({ x: 90, y: 510, w: 35, h: 12, force: 760 });
       }
-      lvl.platforms.push({ x: 1020, y: 360, w: 160, h: 30, color: 'white' });
+      lvl.platforms.push({ x: 1010, y: 360, w: 130, h: 28, color: "white" });
     }
     gameLevels.push(lvl);
   }
 }
 makeLevels();
+window.gameLevels = gameLevels;
 window.levelManager = {
   levels: gameLevels
 };
+window.COLOR_NAMES = COLOR_NAMES;
+window.COLOR_HEX = COLOR_HEX;

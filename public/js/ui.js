@@ -6,14 +6,132 @@ function setupUI() {
   const modalLevels = document.getElementById('modalLevels');
   const modalParty = document.getElementById('modalParty');
   const modalSettings = document.getElementById('modalSettings');
+  const modalHowToPlay = document.getElementById('modalHowToPlay');
+  const btnCloseHowToPlay = document.getElementById('btnCloseHowToPlay');
+  const btnGotItHowToPlay = document.getElementById('btnGotItHowToPlay');
+  const btnHomeHowToPlay = document.getElementById('btnHomeHowToPlay');
+  const howToPlayCountdown = document.getElementById('howToPlayCountdown');
+  let howToPlaySecondsLeft = 15;
+  let howToPlayTimer = null;
+  function closeHowToPlay() {
+    if (howToPlayTimer) {
+      clearInterval(howToPlayTimer);
+      howToPlayTimer = null;
+    }
+    if (modalHowToPlay) {
+      modalHowToPlay.style.display = 'none';
+    }
+  }
+  function startHowToPlayCountdown() {
+    if (!modalHowToPlay) return;
+    modalHowToPlay.style.display = 'flex';
+    howToPlaySecondsLeft = 15;
+    if (howToPlayCountdown) {
+      howToPlayCountdown.textContent = 'Auto-closing in 15s';
+    }
+    if (howToPlayTimer) clearInterval(howToPlayTimer);
+    howToPlayTimer = setInterval(function() {
+      howToPlaySecondsLeft--;
+      if (howToPlayCountdown) {
+        howToPlayCountdown.textContent = 'Auto-closing in ' + howToPlaySecondsLeft + 's';
+      }
+      if (howToPlaySecondsLeft <= 0) {
+        closeHowToPlay();
+      }
+    }, 1000);
+  }
+  if (btnCloseHowToPlay) {
+    btnCloseHowToPlay.onclick = function() {
+      window.colorAudio.playUiClick();
+      closeHowToPlay();
+    };
+  }
+  if (btnGotItHowToPlay) {
+    btnGotItHowToPlay.onclick = function() {
+      window.colorAudio.playUiClick();
+      closeHowToPlay();
+    };
+  }
+  if (modalHowToPlay) {
+    modalHowToPlay.onclick = function(e) {
+      if (e.target === modalHowToPlay) {
+        closeHowToPlay();
+      }
+    };
+  }
+  if (btnHomeHowToPlay) {
+    btnHomeHowToPlay.onclick = function() {
+      window.colorAudio.playUiClick();
+      startHowToPlayCountdown();
+    };
+  }
+  startHowToPlayCountdown();
+  function tryLockLandscape() {
+    try {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(function() {});
+      } else if (document.documentElement.webkitRequestFullscreen) {
+        document.documentElement.webkitRequestFullscreen();
+      }
+    } catch (e) {}
+    try {
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').catch(function() {});
+      }
+    } catch (e) {}
+  }
+  window.tryLockLandscape = tryLockLandscape;
+  const btnForceLandscape = document.getElementById('btnForceLandscape');
+  if (btnForceLandscape) {
+    btnForceLandscape.onclick = function() {
+      window.colorAudio.playUiClick();
+      tryLockLandscape();
+      const ov = document.getElementById('rotateDeviceOverlay');
+      if (ov) ov.classList.add('dismissed');
+    };
+  }
+  const btnDismissRotate = document.getElementById('btnDismissRotate');
+  if (btnDismissRotate) {
+    btnDismissRotate.onclick = function() {
+      window.colorAudio.playUiClick();
+      const ov = document.getElementById('rotateDeviceOverlay');
+      if (ov) ov.classList.add('dismissed');
+    };
+  }
+  function handleOrientationChange() {
+    const isLandscape = window.innerWidth > window.innerHeight;
+    const ov = document.getElementById('rotateDeviceOverlay');
+    if (isLandscape && ov) {
+      ov.classList.remove('dismissed');
+    }
+  }
+  window.addEventListener('resize', handleOrientationChange);
+  window.addEventListener('orientationchange', handleOrientationChange);
+  function showMobileControls() {
+    const c = document.getElementById('mobileTouchControls');
+    if (c && ('ontouchstart' in window || window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 900)) {
+      c.style.display = 'flex';
+    }
+  }
+  function hideMobileControls() {
+    const c = document.getElementById('mobileTouchControls');
+    if (c) c.style.display = 'none';
+  }
+  window.showMobileControls = showMobileControls;
+  window.hideMobileControls = hideMobileControls;
   const btnHomePlay = document.getElementById('btnHomePlay');
   if (btnHomePlay) {
     btnHomePlay.onclick = function() {
+      closeHowToPlay();
       window.colorAudio.init();
       window.colorAudio.playUiClick();
+      if ('ontouchstart' in window || window.matchMedia('(pointer: coarse)').matches) {
+        tryLockLandscape();
+      }
       homeScreen.style.display = 'none';
       gameHeader.style.display = 'flex';
       controlsHintBar.style.display = 'flex';
+      showMobileControls();
       window.inGame = true;
     };
   }
@@ -28,6 +146,7 @@ function setupUI() {
       homeScreen.style.display = 'flex';
       gameHeader.style.display = 'none';
       controlsHintBar.style.display = 'none';
+      hideMobileControls();
       updateHomeStats();
     };
   }
@@ -181,6 +300,7 @@ function setupUI() {
     btnNextLevel.onclick = function() {
       window.colorAudio.playUiClick();
       document.getElementById('modalVictory').style.display = 'none';
+      showMobileControls();
       if (window.loadLevel) {
         window.loadLevel(window.currentLevelIndex + 1);
       }
@@ -190,6 +310,7 @@ function setupUI() {
     btnRetry.onclick = function() {
       window.colorAudio.playUiClick();
       document.getElementById('modalVictory').style.display = 'none';
+      showMobileControls();
       if (window.restartLevel) {
         window.restartLevel();
       }
@@ -367,10 +488,14 @@ function renderLevelGrid() {
     if (isUnlocked) {
       card.onclick = function() {
         window.colorAudio.playUiClick();
+        if ('ontouchstart' in window || window.matchMedia('(pointer: coarse)').matches) {
+          if (window.tryLockLandscape) window.tryLockLandscape();
+        }
         document.getElementById('modalLevels').style.display = 'none';
         document.getElementById('homeScreen').style.display = 'none';
-        document.getElementById('gameHeader').style.display = 'flex';
-        document.getElementById('controlsHintBar').style.display = 'flex';
+        gameHeader.style.display = 'flex';
+        controlsHintBar.style.display = 'flex';
+        showMobileControls();
         window.inGame = true;
         window.loadLevel(i);
       };
@@ -383,6 +508,24 @@ function updateHUD(level, time, deaths) {
   const tierEl = document.getElementById('hudTierName');
   if (titleEl) titleEl.innerText = level.name;
   if (tierEl) tierEl.innerText = level.tierName;
+  if (window.player) {
+    const dots = document.querySelectorAll('.hud-color-dot');
+    for (let i = 0; i < dots.length; i++) {
+      if (dots[i].dataset.color === window.player.color) {
+        dots[i].classList.add('active');
+      } else {
+        dots[i].classList.remove('active');
+      }
+    }
+    const gems = document.querySelectorAll('.touch-color-gem');
+    for (let i = 0; i < gems.length; i++) {
+      if (gems[i].dataset.color === window.player.color) {
+        gems[i].classList.add('active');
+      } else {
+        gems[i].classList.remove('active');
+      }
+    }
+  }
 }
 function updateTimer(time, timeLimit) {
   const timerEl = document.getElementById('hudTimer');
@@ -402,6 +545,7 @@ function showVictoryModal(data) {
   const deathsVal = document.getElementById('vicDeaths');
   const starsContainer = document.getElementById('vicStars');
   const btnNext = document.getElementById('btnNextLevel');
+  hideMobileControls();
   levelName.innerText = data.level.name;
   timeVal.innerText = data.time.toFixed(1) + 's (Target: <' + data.level.targetTime + 's)';
   deathsVal.innerText = data.deaths === 0 ? '0 (Flawless!)' : data.deaths + ' deaths';

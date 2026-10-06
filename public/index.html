@@ -10,18 +10,46 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+  <div id="rotateDeviceOverlay" class="rotate-device-overlay">
+    <div class="rotate-phone-card">
+      <div class="rotate-phone-anim">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#05D9E8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+          <line x1="12" y1="18" x2="12.01" y2="18"></line>
+        </svg>
+      </div>
+      <h3>ROTATE YOUR DEVICE</h3>
+      <p>Prism Shift is designed for horizontal Landscape play.</p>
+      <button id="btnForceLandscape" class="arcade-btn btn-play" style="margin-top: 14px; padding: 10px 18px; font-size: 13px;">Rotate / Fullscreen</button>
+      <button id="btnDismissRotate" class="link-btn" style="margin-top: 10px;">Play in Portrait</button>
+    </div>
+  </div>
   <div id="gameContainer">
     <div id="homeScreen" class="home-screen-overlay">
       <div class="home-menu">
-        <h1 class="game-logo">PRISM SHIFT</h1>
-        <p class="game-desc">Match your color to land on platforms.</p>
+        <h1 class="game-logo"><span class="logo-light">PRISM</span><span class="logo-accent">SHIFT</span></h1>
+        <p class="game-desc">Match your colour to land on shifting light platforms.</p>
         <div class="home-buttons">
-          <button id="btnHomePlay" class="arcade-btn green">Play Solo</button>
-          <button id="btnHomeLevels" class="arcade-btn">Select Level</button>
-          <button id="btnHomeParty" class="arcade-btn">Multiplayer Race</button>
-          <button id="btnHomeSettings" class="arcade-btn">Settings</button>
+          <button id="btnHomePlay" class="arcade-btn btn-play">
+            <span class="btn-icon">▶</span>
+            <span>Play Solo</span>
+          </button>
+          <button id="btnHomeLevels" class="arcade-btn btn-levels">
+            <span class="btn-icon">❖</span>
+            <span>Select Level</span>
+          </button>
+          <button id="btnHomeParty" class="arcade-btn btn-party">
+            <span class="btn-icon">⚡</span>
+            <span>Multiplayer Race</span>
+          </button>
+          <button id="btnHomeSettings" class="arcade-btn btn-settings">
+            <span class="btn-icon">⚙</span>
+            <span>Settings</span>
+          </button>
         </div>
         <div class="home-quick-bar">
+          <button id="btnHomeHowToPlay" class="link-btn">📖 How to Play</button>
+          <span class="bar-dot">•</span>
           <button id="btnHomeSfxToggle" class="link-btn">Sound: ON</button>
           <span class="bar-dot">•</span>
           <button id="btnHomeBgmToggle" class="link-btn">Music: OFF</button>
@@ -32,33 +60,68 @@
     </div>
     <header id="gameHeader" style="display: none;">
       <div class="hud-left">
-        <button id="btnBackHome" class="hud-tag-btn">Menu</button>
+        <button id="btnBackHome" class="hud-tag-btn">◀ Menu</button>
         <span id="hudLevelName" class="hud-title">Level 1</span>
         <span id="hudPartyRoomBadge" class="hud-room-badge" style="display: none;"></span>
       </div>
       <div class="hud-center">
         <div class="color-picker-hud">
-          <button class="hud-color-dot" data-color="red" style="background: #FF2A6D;"></button>
-          <button class="hud-color-dot" data-color="blue" style="background: #05D9E8;"></button>
-          <button class="hud-color-dot" data-color="yellow" style="background: #FFDD00;"></button>
-          <button class="hud-color-dot" data-color="green" style="background: #00F59B;"></button>
+          <button class="hud-color-dot red" data-color="red" style="background: #FF2A6D;" title="1 - Red"></button>
+          <button class="hud-color-dot blue" data-color="blue" style="background: #05D9E8;" title="2 - Blue"></button>
+          <button class="hud-color-dot yellow" data-color="yellow" style="background: #FFDD00;" title="3 - Yellow"></button>
+          <button class="hud-color-dot green" data-color="green" style="background: #00F59B;" title="4 - Green"></button>
         </div>
       </div>
       <div class="hud-right">
         <span id="hudTimer" class="hud-clock">25.0s</span>
-        <button id="btnOpenLevels" class="hud-tag-btn">Levels</button>
-        <button id="btnOpenParty" class="hud-tag-btn">Party</button>
+        <button id="btnOpenLevels" class="hud-tag-btn">❖ Levels</button>
+        <button id="btnOpenParty" class="hud-tag-btn">⚡ Party</button>
         <button id="btnOpenSettings" class="hud-tag-btn">⚙</button>
       </div>
     </header>
     <div id="controlsHintBar" style="display: none;">
-      <span>A/D: Run</span>
-      <span>Space: Jump</span>
-      <span>Shift/Right Click: Slow Time</span>
-      <span>1-4: Switch Color</span>
-      <span>R: Restart</span>
+      <span><kbd>A</kbd><kbd>D</kbd> Run</span>
+      <span><kbd>Space</kbd> Jump</span>
+      <span><kbd>Shift</kbd> Slow Time</span>
+      <span><kbd>1</kbd>-<kbd>4</kbd> Colors</span>
+      <span><kbd>R</kbd> Restart</span>
     </div>
     <div id="globalBanner" class="global-banner"></div>
+    <div id="modalHowToPlay" class="modal-backdrop" style="display: flex;">
+      <div class="modal-box guide-box">
+        <div class="modal-top">
+          <h3>How to Play</h3>
+          <button id="btnCloseHowToPlay" class="modal-x">&times;</button>
+        </div>
+        <div class="guide-banner">
+          <span class="guide-badge">CORE RULE</span>
+          <p>You can <strong>ONLY</strong> land on platforms matching your color! White platforms are neutral and safe for any color.</p>
+        </div>
+        <div class="guide-grid">
+          <div class="guide-card">
+            <div class="guide-card-title">Movement</div>
+            <div class="guide-row"><span>Run</span><span><kbd>A</kbd> <kbd>D</kbd> / <kbd>◀</kbd> <kbd>▶</kbd></span></div>
+            <div class="guide-row"><span>Jump</span><span><kbd>Space</kbd> / <kbd>W</kbd></span></div>
+            <div class="guide-row"><span>Restart</span><span><kbd>R</kbd></span></div>
+          </div>
+          <div class="guide-card">
+            <div class="guide-card-title">Color Shift</div>
+            <div class="guide-colors">
+              <span class="guide-dot red">1</span>
+              <span class="guide-dot blue">2</span>
+              <span class="guide-dot yellow">3</span>
+              <span class="guide-dot green">4</span>
+            </div>
+            <div class="guide-row"><span>Keys</span><span><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></span></div>
+            <div class="guide-row"><span>Focus</span><span><kbd>Shift</kbd> (Slow Time)</span></div>
+          </div>
+        </div>
+        <div class="guide-footer">
+          <span id="howToPlayCountdown" class="countdown-badge">Auto-closing in 15s</span>
+          <button id="btnGotItHowToPlay" class="arcade-btn green">Got It!</button>
+        </div>
+      </div>
+    </div>
     <div id="modalLevels" class="modal-backdrop" style="display: none;">
       <div class="modal-box">
         <div class="modal-top">
@@ -152,7 +215,7 @@
               <select id="partyLevelSelect"></select>
             </div>
             <div class="party-actions-row">
-              <button id="btnStartRace" class="arcade-btn green" style="width: 100%;">Start Race</button>
+              <button id="btnStartRace" class="arcade-btn btn-play" style="width: 100%;">Start Race ▶</button>
               <div id="guestWaitingText" class="waiting-text" style="display: none;">Waiting for host to start race...</div>
               <button id="btnLeaveParty" class="danger-btn" style="width: 100%; margin-top: 8px; padding: 8px;">Leave Room</button>
             </div>
@@ -174,20 +237,31 @@
           <div>Deaths: <strong id="vicDeaths">0</strong></div>
         </div>
         <div class="win-buttons">
-          <button id="btnNextLevel" class="arcade-btn green" style="width: 100%;">Next Level</button>
-          <button id="btnRetry" class="arcade-btn" style="width: 100%;">Retry</button>
-          <button id="btnLevelSelectFromVic" class="arcade-btn" style="width: 100%;">Levels</button>
+          <button id="btnNextLevel" class="arcade-btn btn-play" style="width: 100%;">Next Level ▶</button>
+          <button id="btnRetry" class="arcade-btn btn-levels" style="width: 100%;">Retry ↺</button>
+          <button id="btnLevelSelectFromVic" class="arcade-btn btn-settings" style="width: 100%;">Levels ❖</button>
         </div>
       </div>
     </div>
-    <div id="mobileTouchControls">
-      <div class="touch-left">
-        <button id="touchLeft" class="touch-circle">◀</button>
-        <button id="touchRight" class="touch-circle">▶</button>
+    <div id="mobileTouchControls" style="display: none;">
+      <div class="touch-left-zone">
+        <div class="touch-dpad" id="touchDpad">
+          <button id="touchLeft" class="touch-btn dpad-btn" aria-label="Move Left">◀</button>
+          <div class="dpad-divider"></div>
+          <button id="touchRight" class="touch-btn dpad-btn" aria-label="Move Right">▶</button>
+        </div>
       </div>
-      <div class="touch-right">
-        <button id="touchWheel" class="touch-oval">COLOR</button>
-        <button id="touchJump" class="touch-circle jump">JUMP</button>
+      <div class="touch-right-zone">
+        <div class="touch-color-cluster">
+          <button id="touchColorRed" class="touch-color-gem red" data-color="red" aria-label="Shift Red">1</button>
+          <button id="touchColorBlue" class="touch-color-gem blue" data-color="blue" aria-label="Shift Blue">2</button>
+          <button id="touchColorYellow" class="touch-color-gem yellow" data-color="yellow" aria-label="Shift Yellow">3</button>
+          <button id="touchColorGreen" class="touch-color-gem green" data-color="green" aria-label="Shift Green">4</button>
+        </div>
+        <div class="touch-action-row">
+          <button id="touchSlowMo" class="touch-action-btn slowmo" aria-label="Slow Motion">SLOW</button>
+          <button id="touchJump" class="touch-action-btn jump" aria-label="Jump">JUMP</button>
+        </div>
       </div>
     </div>
     <canvas id="gameCanvas" width="1280" height="720"></canvas>

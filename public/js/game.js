@@ -193,46 +193,113 @@ function setupInputs() {
   setupTouch();
 }
 function setupTouch() {
+  const dpad = document.getElementById('touchDpad');
   const btnLeft = document.getElementById('touchLeft');
   const btnRight = document.getElementById('touchRight');
   const btnJump = document.getElementById('touchJump');
-  const btnWheel = document.getElementById('touchWheel');
-  if (!btnLeft || !btnJump) return;
-  btnLeft.ontouchstart = function(e) { e.preventDefault(); if (window.inGame) keys.left = true; };
-  btnLeft.ontouchend = function(e) { e.preventDefault(); keys.left = false; };
-  btnRight.ontouchstart = function(e) { e.preventDefault(); if (window.inGame) keys.right = true; };
-  btnRight.ontouchend = function(e) { e.preventDefault(); keys.right = false; };
-  btnJump.ontouchstart = function(e) {
-    e.preventDefault();
-    if (window.inGame) {
-      keys.jumpPressed = true;
-      keys.jumpHold = true;
+  const btnSlowMo = document.getElementById('touchSlowMo');
+  const gemRed = document.getElementById('touchColorRed');
+  const gemBlue = document.getElementById('touchColorBlue');
+  const gemYellow = document.getElementById('touchColorYellow');
+  const gemGreen = document.getElementById('touchColorGreen');
+  if (!dpad && !btnJump) return;
+  function handleDpadTouch(touch) {
+    if (!dpad || !window.inGame) return;
+    let rect = dpad.getBoundingClientRect();
+    let midX = rect.left + rect.width / 2;
+    if (touch.clientX < midX) {
+      keys.left = true;
+      keys.right = false;
+      if (btnLeft) btnLeft.classList.add('active');
+      if (btnRight) btnRight.classList.remove('active');
+    } else {
+      keys.right = true;
+      keys.left = false;
+      if (btnRight) btnRight.classList.add('active');
+      if (btnLeft) btnLeft.classList.remove('active');
     }
-  };
-  btnJump.ontouchend = function(e) {
-    e.preventDefault();
-    keys.jumpHold = false;
-  };
-  btnWheel.ontouchstart = function(e) {
-    e.preventDefault();
-    if (window.inGame) setSlowMotionState(true);
-  };
-  btnWheel.ontouchmove = function(e) {
-    e.preventDefault();
-    if (!window.inGame) return;
-    let touch = e.touches[0];
-    let rect = btnWheel.getBoundingClientRect();
-    let cx = rect.left + rect.width / 2;
-    let cy = rect.top + rect.height / 2;
-    wheelAngle = Math.atan2(touch.clientY - cy, touch.clientX - cx);
-    selectedWheelColor = getColorFromAngle(wheelAngle);
-  };
-  btnWheel.ontouchend = function(e) {
-    e.preventDefault();
-    if (!window.inGame) return;
-    commitWheelColor();
-    setSlowMotionState(false);
-  };
+  }
+  function clearDpad() {
+    keys.left = false;
+    keys.right = false;
+    if (btnLeft) btnLeft.classList.remove('active');
+    if (btnRight) btnRight.classList.remove('active');
+  }
+  if (dpad) {
+    dpad.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      if (e.touches.length > 0) handleDpadTouch(e.touches[0]);
+    }, { passive: false });
+    dpad.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+      if (e.touches.length > 0) handleDpadTouch(e.touches[0]);
+    }, { passive: false });
+    dpad.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      clearDpad();
+    }, { passive: false });
+    dpad.addEventListener('touchcancel', function(e) {
+      e.preventDefault();
+      clearDpad();
+    }, { passive: false });
+  }
+  if (btnJump) {
+    btnJump.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      if (window.inGame) {
+        keys.jumpPressed = true;
+        keys.jumpHold = true;
+        btnJump.classList.add('active');
+      }
+    }, { passive: false });
+    btnJump.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      keys.jumpHold = false;
+      btnJump.classList.remove('active');
+    }, { passive: false });
+    btnJump.addEventListener('touchcancel', function(e) {
+      e.preventDefault();
+      keys.jumpHold = false;
+      btnJump.classList.remove('active');
+    }, { passive: false });
+  }
+  if (btnSlowMo) {
+    btnSlowMo.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      if (window.inGame) {
+        setSlowMotionState(true);
+        btnSlowMo.classList.add('active');
+      }
+    }, { passive: false });
+    btnSlowMo.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      setSlowMotionState(false);
+      btnSlowMo.classList.remove('active');
+    }, { passive: false });
+    btnSlowMo.addEventListener('touchcancel', function(e) {
+      e.preventDefault();
+      setSlowMotionState(false);
+      btnSlowMo.classList.remove('active');
+    }, { passive: false });
+  }
+  const colorGems = [
+    { el: gemRed, color: 'red' },
+    { el: gemBlue, color: 'blue' },
+    { el: gemYellow, color: 'yellow' },
+    { el: gemGreen, color: 'green' }
+  ];
+  colorGems.forEach(function(item) {
+    if (!item.el) return;
+    item.el.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      if (window.inGame && window.setPlayerColor) {
+        let changed = window.setPlayerColor(item.color);
+        if (changed && window.renderer && window.player) {
+          window.renderer.addColorBurst(window.player.x, window.player.y, item.color);
+        }
+      }
+    }, { passive: false });
+  });
 }
 function setSlowMotionState(active) {
   if (isSlowMo !== active) {
@@ -323,6 +390,8 @@ function setupSocket() {
     if (homeScreen) homeScreen.style.display = 'none';
     if (gameHeader) gameHeader.style.display = 'flex';
     if (controlsHintBar) controlsHintBar.style.display = 'flex';
+    if (window.showMobileControls) window.showMobileControls();
+    if (window.tryLockLandscape) window.tryLockLandscape();
     window.inGame = true;
     for (let id in opponents) {
       delete opponents[id];
