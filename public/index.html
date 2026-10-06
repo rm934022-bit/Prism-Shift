@@ -20,7 +20,7 @@
       </div>
       <h3>ROTATE YOUR DEVICE</h3>
       <p>Prism Shift is designed for horizontal Landscape play.</p>
-      <button id="btnForceLandscape" class="arcade-btn btn-play" style="margin-top: 14px; padding: 10px 18px; font-size: 13px;">Rotate / Fullscreen</button>
+      <button id="btnForceLandscape" class="arcade-btn btn-play" style="margin-top: 14px; padding: 10px 18px; font-size: 13px;">🔄 Play in Landscape (90°)</button>
       <button id="btnDismissRotate" class="link-btn" style="margin-top: 10px;">Play in Portrait</button>
     </div>
   </div>
@@ -74,6 +74,7 @@
       </div>
       <div class="hud-right">
         <span id="hudTimer" class="hud-clock">25.0s</span>
+        <button id="btnToggleRotate" class="hud-tag-btn" title="Toggle Landscape">🔄 90°</button>
         <button id="btnOpenLevels" class="hud-tag-btn">❖ Levels</button>
         <button id="btnOpenParty" class="hud-tag-btn">⚡ Party</button>
         <button id="btnOpenSettings" class="hud-tag-btn">⚙</button>
@@ -253,14 +254,15 @@
       </div>
       <div class="touch-right-zone">
         <div class="touch-color-cluster">
-          <button id="touchColorRed" class="touch-color-gem red" data-color="red" aria-label="Shift Red">1</button>
-          <button id="touchColorBlue" class="touch-color-gem blue" data-color="blue" aria-label="Shift Blue">2</button>
-          <button id="touchColorYellow" class="touch-color-gem yellow" data-color="yellow" aria-label="Shift Yellow">3</button>
-          <button id="touchColorGreen" class="touch-color-gem green" data-color="green" aria-label="Shift Green">4</button>
+          <button id="touchColorRed" class="touch-color-gem red" data-color="red" aria-label="Shift Red">RED</button>
+          <button id="touchColorBlue" class="touch-color-gem blue" data-color="blue" aria-label="Shift Blue">BLUE</button>
+          <button id="touchColorYellow" class="touch-color-gem yellow" data-color="yellow" aria-label="Shift Yellow">YEL</button>
+          <button id="touchColorGreen" class="touch-color-gem green" data-color="green" aria-label="Shift Green">GRN</button>
         </div>
         <div class="touch-action-row">
-          <button id="touchSlowMo" class="touch-action-btn slowmo" aria-label="Slow Motion">SLOW</button>
-          <button id="touchJump" class="touch-action-btn jump" aria-label="Jump">JUMP</button>
+          <button id="touchSlowMo" class="touch-action-btn slowmo" aria-label="Slow Motion">⏱ SLOW</button>
+          <button id="touchCycle" class="touch-action-btn cycle" aria-label="Cycle Color">⇄ SHIFT</button>
+          <button id="touchJump" class="touch-action-btn jump" aria-label="Jump">▲ JUMP</button>
         </div>
       </div>
     </div>

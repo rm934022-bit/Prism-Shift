@@ -133,8 +133,11 @@ function setupInputs() {
       }
       keys.jumpHold = true;
     }
-    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyE' || e.code === 'KeyQ') {
+    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyQ') {
       setSlowMotionState(true);
+    }
+    if (e.code === 'KeyE' || e.code === 'KeyC') {
+      cyclePlayerColor();
     }
     if (e.key === '1') window.setPlayerColor('red');
     if (e.key === '2') window.setPlayerColor('blue');
@@ -192,55 +195,119 @@ function setupInputs() {
   });
   setupTouch();
 }
+function cyclePlayerColor() {
+  if (!window.player || !window.inGame) return;
+  const standardColors = ['red', 'blue', 'yellow', 'green'];
+  let current = window.player.color;
+  let targetColors = standardColors;
+  if (window.currentLevel && window.currentLevel.platforms) {
+    let activeInLevel = [];
+    for (let i = 0; i < window.currentLevel.platforms.length; i++) {
+      let c = window.currentLevel.platforms[i].color;
+      if (c && c !== 'white' && standardColors.includes(c) && !activeInLevel.includes(c)) {
+        activeInLevel.push(c);
+      }
+    }
+    if (activeInLevel.length > 1) {
+      targetColors = activeInLevel;
+    }
+  }
+  let idx = targetColors.indexOf(current);
+  let nextColor = targetColors[(idx + 1) % targetColors.length];
+  if (window.setPlayerColor) {
+    let changed = window.setPlayerColor(nextColor);
+    if (changed && window.renderer && window.player) {
+      window.renderer.addColorBurst(window.player.x, window.player.y, nextColor);
+    }
+  }
+}
+window.cyclePlayerColor = cyclePlayerColor;
 function setupTouch() {
   const dpad = document.getElementById('touchDpad');
   const btnLeft = document.getElementById('touchLeft');
   const btnRight = document.getElementById('touchRight');
   const btnJump = document.getElementById('touchJump');
+  const btnCycle = document.getElementById('touchCycle');
   const btnSlowMo = document.getElementById('touchSlowMo');
   const gemRed = document.getElementById('touchColorRed');
   const gemBlue = document.getElementById('touchColorBlue');
   const gemYellow = document.getElementById('touchColorYellow');
   const gemGreen = document.getElementById('touchColorGreen');
   if (!dpad && !btnJump) return;
-  function handleDpadTouch(touch) {
-    if (!dpad || !window.inGame) return;
-    let rect = dpad.getBoundingClientRect();
-    let midX = rect.left + rect.width / 2;
-    if (touch.clientX < midX) {
-      keys.left = true;
+  function setMoveLeft(active) {
+    keys.left = active;
+    if (active) {
       keys.right = false;
       if (btnLeft) btnLeft.classList.add('active');
       if (btnRight) btnRight.classList.remove('active');
     } else {
-      keys.right = true;
-      keys.left = false;
-      if (btnRight) btnRight.classList.add('active');
       if (btnLeft) btnLeft.classList.remove('active');
     }
   }
-  function clearDpad() {
-    keys.left = false;
-    keys.right = false;
-    if (btnLeft) btnLeft.classList.remove('active');
-    if (btnRight) btnRight.classList.remove('active');
+  function setMoveRight(active) {
+    keys.right = active;
+    if (active) {
+      keys.left = false;
+      if (btnRight) btnRight.classList.add('active');
+      if (btnLeft) btnLeft.classList.remove('active');
+    } else {
+      if (btnRight) btnRight.classList.remove('active');
+    }
+  }
+  if (btnLeft) {
+    btnLeft.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      setMoveLeft(true);
+    }, { passive: false });
+    btnLeft.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      setMoveLeft(false);
+    }, { passive: false });
+    btnLeft.addEventListener('touchcancel', function(e) {
+      e.preventDefault();
+      setMoveLeft(false);
+    }, { passive: false });
+  }
+  if (btnRight) {
+    btnRight.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      setMoveRight(true);
+    }, { passive: false });
+    btnRight.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      setMoveRight(false);
+    }, { passive: false });
+    btnRight.addEventListener('touchcancel', function(e) {
+      e.preventDefault();
+      setMoveRight(false);
+    }, { passive: false });
   }
   if (dpad) {
+    function updateDpadFromTouch(touch) {
+      let el = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (el && (el === btnLeft || btnLeft.contains(el))) {
+        setMoveLeft(true);
+      } else if (el && (el === btnRight || btnRight.contains(el))) {
+        setMoveRight(true);
+      }
+    }
     dpad.addEventListener('touchstart', function(e) {
       e.preventDefault();
-      if (e.touches.length > 0) handleDpadTouch(e.touches[0]);
+      if (e.touches.length > 0) updateDpadFromTouch(e.touches[0]);
     }, { passive: false });
     dpad.addEventListener('touchmove', function(e) {
       e.preventDefault();
-      if (e.touches.length > 0) handleDpadTouch(e.touches[0]);
+      if (e.touches.length > 0) updateDpadFromTouch(e.touches[0]);
     }, { passive: false });
     dpad.addEventListener('touchend', function(e) {
       e.preventDefault();
-      clearDpad();
+      setMoveLeft(false);
+      setMoveRight(false);
     }, { passive: false });
     dpad.addEventListener('touchcancel', function(e) {
       e.preventDefault();
-      clearDpad();
+      setMoveLeft(false);
+      setMoveRight(false);
     }, { passive: false });
   }
   if (btnJump) {
@@ -263,23 +330,33 @@ function setupTouch() {
       btnJump.classList.remove('active');
     }, { passive: false });
   }
+  if (btnCycle) {
+    btnCycle.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      cyclePlayerColor();
+      btnCycle.classList.add('active');
+    }, { passive: false });
+    btnCycle.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      btnCycle.classList.remove('active');
+    }, { passive: false });
+    btnCycle.addEventListener('touchcancel', function(e) {
+      e.preventDefault();
+      btnCycle.classList.remove('active');
+    }, { passive: false });
+  }
   if (btnSlowMo) {
     btnSlowMo.addEventListener('touchstart', function(e) {
       e.preventDefault();
       if (window.inGame) {
-        setSlowMotionState(true);
-        btnSlowMo.classList.add('active');
+        let newState = !isSlowMo;
+        setSlowMotionState(newState);
+        if (newState) {
+          btnSlowMo.classList.add('active');
+        } else {
+          btnSlowMo.classList.remove('active');
+        }
       }
-    }, { passive: false });
-    btnSlowMo.addEventListener('touchend', function(e) {
-      e.preventDefault();
-      setSlowMotionState(false);
-      btnSlowMo.classList.remove('active');
-    }, { passive: false });
-    btnSlowMo.addEventListener('touchcancel', function(e) {
-      e.preventDefault();
-      setSlowMotionState(false);
-      btnSlowMo.classList.remove('active');
     }, { passive: false });
   }
   const colorGems = [

@@ -911,22 +911,22 @@ kbd {
 .touch-dpad {
   display: flex;
   align-items: center;
-  background: rgba(14, 19, 31, 0.85);
+  background: rgba(14, 19, 31, 0.88);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 30px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  border: 1.5px solid rgba(5, 217, 232, 0.4);
+  border-radius: 32px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), 0 0 16px rgba(5, 217, 232, 0.15);
   overflow: hidden;
   touch-action: none;
 }
 .dpad-btn {
-  width: 62px;
-  height: 56px;
+  width: 66px;
+  height: 58px;
   background: transparent;
   border: none;
   color: #f1f5f9;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
   display: flex;
   justify-content: center;
@@ -936,27 +936,28 @@ kbd {
   touch-action: none;
 }
 .dpad-btn.active, .dpad-btn:active {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(5, 217, 232, 0.25);
   color: #05D9E8;
+  text-shadow: 0 0 10px #05D9E8;
 }
 .dpad-divider {
   width: 1px;
-  height: 28px;
-  background: rgba(255, 255, 255, 0.12);
+  height: 30px;
+  background: rgba(255, 255, 255, 0.16);
 }
 .touch-color-cluster {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 .touch-color-gem {
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 36px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
   font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 800;
   display: flex;
   justify-content: center;
@@ -970,26 +971,33 @@ kbd {
 .touch-color-gem.red {
   background: #FF2A6D;
   color: #fff;
+  border-color: #ff5c91;
 }
 .touch-color-gem.blue {
   background: #05D9E8;
+  color: #061820;
+  border-color: #55ecf7;
 }
 .touch-color-gem.yellow {
   background: #FFDD00;
+  color: #1a1600;
+  border-color: #ffe84d;
 }
 .touch-color-gem.green {
   background: #00F59B;
+  color: #042416;
+  border-color: #4df8b7;
 }
 .touch-color-gem.active {
-  transform: scale(1.18);
+  transform: scale(1.15);
   border: 2px solid #fff;
-  box-shadow: 0 0 16px currentColor, 0 0 2px #fff;
+  box-shadow: 0 0 18px currentColor, 0 0 4px #fff;
 }
 .touch-action-row {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 .touch-action-btn {
   font-family: 'Plus Jakarta Sans', sans-serif;
@@ -1007,14 +1015,14 @@ kbd {
   transform: scale(0.92);
 }
 .touch-action-btn.slowmo {
-  width: 50px;
-  height: 50px;
-  font-size: 10px;
+  width: 48px;
+  height: 48px;
+  font-size: 9px;
   letter-spacing: 0.5px;
-  background: rgba(14, 19, 31, 0.85);
+  background: rgba(14, 19, 31, 0.88);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 2px solid #05D9E8;
+  border: 1.5px solid #05D9E8;
   color: #05D9E8;
 }
 .touch-action-btn.slowmo.active {
@@ -1022,15 +1030,55 @@ kbd {
   color: #061820;
   box-shadow: 0 0 18px rgba(5, 217, 232, 0.6);
 }
+.touch-action-btn.cycle {
+  width: 58px;
+  height: 58px;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  background: linear-gradient(135deg, #FF2A6D 0%, #05D9E8 100%);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  box-shadow: 0 8px 24px rgba(255, 42, 109, 0.45);
+}
 .touch-action-btn.jump {
-  width: 66px;
-  height: 66px;
-  font-size: 13px;
+  width: 68px;
+  height: 68px;
+  font-size: 12px;
   letter-spacing: 1px;
   background: linear-gradient(135deg, #00F59B 0%, #00cb7b 100%);
   border: 2px solid #00F59B;
   color: #061d14;
   box-shadow: 0 8px 24px rgba(0, 245, 155, 0.45);
+}
+body.force-landscape {
+  overflow: hidden;
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+}
+body.force-landscape #gameContainer {
+  position: fixed;
+  top: 0;
+  left: 100vw;
+  width: 100vh;
+  height: 100vw;
+  transform: rotate(90deg);
+  transform-origin: top left;
+  overflow: hidden;
+}
+body.force-landscape #gameCanvas {
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+}
+body.force-landscape #rotateDeviceOverlay {
+  display: none !important;
+}
+body.force-landscape #mobileTouchControls {
+  bottom: max(8px, env(safe-area-inset-bottom));
+  left: max(12px, env(safe-area-inset-left));
+  right: max(12px, env(safe-area-inset-right));
 }
 .rotate-device-overlay {
   display: none;
@@ -1053,6 +1101,31 @@ kbd {
 @media (orientation: portrait) and (max-width: 900px) {
   .rotate-device-overlay:not(.dismissed) {
     display: flex;
+  }
+  body:not(.force-landscape) #gameContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: max(46px, env(safe-area-inset-top));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  body:not(.force-landscape) #gameCanvas {
+    width: 95vw;
+    max-width: 95vw;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
+    margin-top: 10px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8), 0 0 20px rgba(5, 217, 232, 0.15);
+  }
+  body:not(.force-landscape) #mobileTouchControls {
+    position: relative;
+    width: 94vw;
+    margin-bottom: 8px;
+    bottom: auto;
+    left: auto;
+    right: auto;
   }
 }
 .rotate-phone-card {
@@ -1247,31 +1320,36 @@ kbd {
     right: max(10px, env(safe-area-inset-right));
   }
   .dpad-btn {
-    width: 52px;
-    height: 46px;
-    font-size: 18px;
+    width: 56px;
+    height: 48px;
+    font-size: 19px;
   }
   .touch-color-cluster {
     gap: 6px;
     margin-bottom: 6px;
   }
   .touch-color-gem {
-    width: 32px;
-    height: 32px;
-    font-size: 11px;
+    width: 38px;
+    height: 30px;
+    font-size: 10px;
     border-radius: 8px;
   }
   .touch-action-row {
     gap: 8px;
   }
   .touch-action-btn.jump {
-    width: 56px;
-    height: 56px;
+    width: 58px;
+    height: 58px;
     font-size: 11px;
+  }
+  .touch-action-btn.cycle {
+    width: 50px;
+    height: 50px;
+    font-size: 10px;
   }
   .touch-action-btn.slowmo {
     width: 42px;
     height: 42px;
-    font-size: 9px;
+    font-size: 8px;
   }
 }

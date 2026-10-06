@@ -81,10 +81,36 @@ function setupUI() {
     } catch (e) {}
   }
   window.tryLockLandscape = tryLockLandscape;
+  function toggleForceLandscape(forceState) {
+    let shouldForce = (typeof forceState === 'boolean') ? forceState : !document.body.classList.contains('force-landscape');
+    if (shouldForce) {
+      document.body.classList.add('force-landscape');
+      localStorage.setItem('prism_force_landscape', 'true');
+      const ov = document.getElementById('rotateDeviceOverlay');
+      if (ov) ov.classList.add('dismissed');
+    } else {
+      document.body.classList.remove('force-landscape');
+      localStorage.setItem('prism_force_landscape', 'false');
+    }
+  }
+  window.toggleForceLandscape = toggleForceLandscape;
+  if (localStorage.getItem('prism_force_landscape') !== 'false') {
+    if ('ontouchstart' in window && window.innerWidth < window.innerHeight) {
+      toggleForceLandscape(true);
+    }
+  }
+  const btnToggleRotate = document.getElementById('btnToggleRotate');
+  if (btnToggleRotate) {
+    btnToggleRotate.onclick = function() {
+      window.colorAudio.playUiClick();
+      toggleForceLandscape();
+    };
+  }
   const btnForceLandscape = document.getElementById('btnForceLandscape');
   if (btnForceLandscape) {
     btnForceLandscape.onclick = function() {
       window.colorAudio.playUiClick();
+      toggleForceLandscape(true);
       tryLockLandscape();
       const ov = document.getElementById('rotateDeviceOverlay');
       if (ov) ov.classList.add('dismissed');
@@ -94,6 +120,7 @@ function setupUI() {
   if (btnDismissRotate) {
     btnDismissRotate.onclick = function() {
       window.colorAudio.playUiClick();
+      toggleForceLandscape(false);
       const ov = document.getElementById('rotateDeviceOverlay');
       if (ov) ov.classList.add('dismissed');
     };
@@ -101,8 +128,13 @@ function setupUI() {
   function handleOrientationChange() {
     const isLandscape = window.innerWidth > window.innerHeight;
     const ov = document.getElementById('rotateDeviceOverlay');
-    if (isLandscape && ov) {
-      ov.classList.remove('dismissed');
+    if (isLandscape) {
+      document.body.classList.remove('force-landscape');
+      if (ov) ov.classList.remove('dismissed');
+    } else {
+      if (localStorage.getItem('prism_force_landscape') === 'true') {
+        document.body.classList.add('force-landscape');
+      }
     }
   }
   window.addEventListener('resize', handleOrientationChange);
